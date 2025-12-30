@@ -83,7 +83,7 @@ echo "  Identity Pool ID: $IDENTITY_POOL_ID"
 echo "Updating API CLI inputs with User Pool ID..."
 node -e "
 const fs = require('fs');
-const path = './amplify/backend/api/productManagementApi/cli-inputs.json';
+const path = './amplify/backend/api/orderManagementApi/cli-inputs.json';
 const config = JSON.parse(fs.readFileSync(path, 'utf8'));
 
 config.authorizationType = 'AMAZON_COGNITO_USER_POOLS';
