@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-k2bordermanagement-dev-27dab-authRole",
+      "UnauthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bordermanagement-dev-27dab-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bordermanagement-dev-27dab-authRole",
+      "Region": "ap-southeast-2",
+      "DeploymentBucketName": "amplify-k2bordermanagement-dev-27dab-deployment",
+      "UnauthRoleName": "amplify-k2bordermanagement-dev-27dab-unauthRole",
+      "StackName": "amplify-k2bordermanagement-dev-27dab",
+      "StackId": "arn:aws:cloudformation:ap-southeast-2:311840443005:stack/amplify-k2bordermanagement-dev-27dab/2ab37830-e529-11f0-942b-0a1cbe7ec0d1",
+      "AmplifyAppId": "d11e8gfwwx5y3q"
+    },
+    "categories": {
+      "function": {
+        "orderHandler": {}
+      }
+    }
+  }
+}

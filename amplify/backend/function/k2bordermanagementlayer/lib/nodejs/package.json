@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "pg": "^8.11.0",
+    "serverless-http": "^4.0.0"
+  }
+}
