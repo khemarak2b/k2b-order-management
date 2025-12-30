@@ -59,6 +59,7 @@ const getOrder = async (pool, id) => {
              media: mediaResult.rows
          };
          */
+         return {};
      } finally {
          client.release();
      }
