@@ -14,6 +14,21 @@
     "categories": {
       "function": {
         "ordersHandler": {}
+      },
+      "auth": {
+        "k2bordermanagement8095756e": {
+          "userPoolId": "ap-southeast-2_THC7OTTv7",
+          "userPoolName": "k2bidpcd7e5d27_userpool_cd7e5d27-dev",
+          "webClientId": "6gd0r85kba5g08phitjplf2vj0",
+          "nativeClientId": "6j5kn0uinogrd7n8a3n5gnhj3h",
+          "identityPoolId": "ap-southeast-2:a97d3c31-ea0d-47a8-9283-d7d0f587aacf",
+          "identityPoolName": "k2bidpcd7e5d27_identitypool_cd7e5d27__dev",
+          "allowUnauthenticatedIdentities": false,
+          "authRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bidp-dev-55df4-authRole",
+          "authRoleName": "amplify-k2bidp-dev-55df4-authRole",
+          "unauthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bidp-dev-55df4-unauthRole",
+          "unauthRoleName": "amplify-k2bidp-dev-55df4-unauthRole"
+        }
       }
     }
   }
