@@ -1,12 +1,11 @@
 {
-  "permissions": {},
   "lambdaLayers": [
     {
       "type": "ProjectLayer",
       "resourceName": "k2bordermanagementlayer",
+      "env": "dev",
       "version": "Always choose latest version",
-      "isLatestVersionSelected": true,
-      "env": "dev"
+      "isLatestVersionSelected": true
     }
   ]
 }

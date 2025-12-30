@@ -1,5 +1,6 @@
 {
   "runtimes": [
-    "nodejs22.x"
-  ]
+    "nodejs18.x"
+  ],
+  "description": "Updated layer version 2025-12-30T06:43:56.034Z"
 }

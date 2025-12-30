@@ -1,22 +1,30 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-k2bordermanagement-dev-27dab-authRole",
-      "UnauthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bordermanagement-dev-27dab-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bordermanagement-dev-27dab-authRole",
+      "AuthRoleName": "amplify-k2bordermanagement-dev-58c36-authRole",
+      "UnauthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bordermanagement-dev-58c36-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bordermanagement-dev-58c36-authRole",
       "Region": "ap-southeast-2",
-      "DeploymentBucketName": "amplify-k2bordermanagement-dev-27dab-deployment",
-      "UnauthRoleName": "amplify-k2bordermanagement-dev-27dab-unauthRole",
-      "StackName": "amplify-k2bordermanagement-dev-27dab",
-      "StackId": "arn:aws:cloudformation:ap-southeast-2:311840443005:stack/amplify-k2bordermanagement-dev-27dab/2ab37830-e529-11f0-942b-0a1cbe7ec0d1",
-      "AmplifyAppId": "d11e8gfwwx5y3q"
+      "DeploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
+      "UnauthRoleName": "amplify-k2bordermanagement-dev-58c36-unauthRole",
+      "StackName": "amplify-k2bordermanagement-dev-58c36",
+      "StackId": "arn:aws:cloudformation:ap-southeast-2:311840443005:stack/amplify-k2bordermanagement-dev-58c36/ff122d40-e549-11f0-9dbb-024e442bc7d1",
+      "AmplifyAppId": "d2l9hfxrb4cgje",
+      "APIGatewayAuthURL": "https://s3.amazonaws.com/amplify-k2bordermanagement-dev-58c36-deployment/amplify-cfn-templates/api/APIGatewayAuthStack.json"
     },
     "categories": {
       "function": {
-        "ordersHandler": {}
+        "ordersHandler": {
+          "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
+          "s3Key": "amplify-builds/ordersHandler-41664250424438587574-build.zip"
+        },
+        "k2bordermanagementlayer": {
+          "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
+          "s3Key": "amplify-builds/k2bordermanagementlayer-LambdaLayerVersionccaf7152-build.zip"
+        }
       },
       "auth": {
-        "k2bordermanagement8095756e": {
+        "k2bordermanagement3df18ae1": {
           "userPoolId": "ap-southeast-2_THC7OTTv7",
           "userPoolName": "k2bidpcd7e5d27_userpool_cd7e5d27-dev",
           "webClientId": "6gd0r85kba5g08phitjplf2vj0",
@@ -29,6 +37,9 @@
           "unauthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bidp-dev-55df4-unauthRole",
           "unauthRoleName": "amplify-k2bidp-dev-55df4-unauthRole"
         }
+      },
+      "api": {
+        "orderManagementApi": {}
       }
     }
   }

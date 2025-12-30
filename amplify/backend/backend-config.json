@@ -1,7 +1,22 @@
 {
-  "api": {},
+  "api": {
+    "orderManagementApi": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "ordersHandler"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "API Gateway"
+    }
+  },
   "auth": {
-    "k2bordermanagement8095756e": {
+    "k2bordermanagement3df18ae1": {
       "customAuth": false,
       "dependsOn": [],
       "providerPlugin": "awscloudformation",
@@ -31,91 +46,123 @@
     }
   },
   "parameters": {
-    "AMPLIFY_auth_k2bordermanagement8095756e_allowUnauthenticatedIdentities": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_allowUnauthenticatedIdentities": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
         }
       ]
     },
-    "AMPLIFY_auth_k2bordermanagement8095756e_authRoleArn": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_authRoleArn": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
         }
       ]
     },
-    "AMPLIFY_auth_k2bordermanagement8095756e_authRoleName": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_authRoleName": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
         }
       ]
     },
-    "AMPLIFY_auth_k2bordermanagement8095756e_identityPoolId": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_identityPoolId": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
         }
       ]
     },
-    "AMPLIFY_auth_k2bordermanagement8095756e_identityPoolName": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_identityPoolName": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
         }
       ]
     },
-    "AMPLIFY_auth_k2bordermanagement8095756e_nativeClientId": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_nativeClientId": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
         }
       ]
     },
-    "AMPLIFY_auth_k2bordermanagement8095756e_unauthRoleArn": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_unauthRoleArn": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
         }
       ]
     },
-    "AMPLIFY_auth_k2bordermanagement8095756e_unauthRoleName": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_unauthRoleName": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
         }
       ]
     },
-    "AMPLIFY_auth_k2bordermanagement8095756e_userPoolId": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_userPoolId": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
         }
       ]
     },
-    "AMPLIFY_auth_k2bordermanagement8095756e_userPoolName": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_userPoolName": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
         }
       ]
     },
-    "AMPLIFY_auth_k2bordermanagement8095756e_webClientId": {
+    "AMPLIFY_auth_k2bordermanagement3df18ae1_webClientId": {
       "usedBy": [
         {
           "category": "auth",
-          "resourceName": "k2bordermanagement8095756e"
+          "resourceName": "k2bordermanagement3df18ae1"
+        }
+      ]
+    },
+    "AMPLIFY_function_k2bordermanagementlayer_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "k2bordermanagementlayer"
+        }
+      ]
+    },
+    "AMPLIFY_function_k2bordermanagementlayer_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "k2bordermanagementlayer"
+        }
+      ]
+    },
+    "AMPLIFY_function_ordersHandler_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "ordersHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_ordersHandler_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "ordersHandler"
         }
       ]
     }

@@ -1,7 +1,13 @@
 {
   "permissions": [
     {
-      "type": "Public"
+      "type": "AwsOrg",
+      "orgs": [
+        "o-b5t427dep2"
+      ]
+    },
+    {
+      "type": "Private"
     }
   ],
   "runtimes": [
