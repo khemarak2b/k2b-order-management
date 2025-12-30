@@ -13,7 +13,10 @@
     },
     "categories": {
       "function": {
-        "orderHandler": {}
+        "ordersHandler": {}
+      },
+      "auth": {
+        "k2bordermanagement": {}
       }
     }
   }
