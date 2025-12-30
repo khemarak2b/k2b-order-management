@@ -55,8 +55,8 @@ echo "Current amplify directory contents:"
 ls -al amplify/ || echo "amplify/ directory not found"
 
 # Setup IDP (Cognito) configuration from shared module BEFORE init
-echo "Setting up IDP configuration..."
-bash scripts/setup-idp-config.sh "$DEPLOYMENT_ENV" "$BUCKET_NAME" "$APPLICATION_NAME" "$DEPLOYMENT_REGION"
+# echo "Setting up IDP configuration..."
+# bash scripts/setup-idp-config.sh "$DEPLOYMENT_ENV" "$BUCKET_NAME" "$APPLICATION_NAME" "$DEPLOYMENT_REGION"
 
 # Try to download team-provider-info.json from S3
 echo "Attempting to download team-provider-info.json from S3..."
