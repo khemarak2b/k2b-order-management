@@ -129,7 +129,7 @@ const authConfig = {
 
 // Replace entire auth entry
 config['$DEPLOYMENT_ENV'].categories.auth = {
-  k2bproductmanagementf925b91f: authConfig
+  k2bordermanagement3df18ae1: authConfig
 };
 
 fs.writeFileSync(path, JSON.stringify(config, null, 2));
