@@ -16,29 +16,12 @@
     }
   },
   "auth": {
-    "k2bordermanagement": {
+    "k2bordermanagementcda755e2": {
+      "customAuth": false,
       "dependsOn": [],
-      "frontendAuthConfig": {
-        "mfaConfiguration": "OFF",
-        "mfaTypes": [
-          "SMS"
-        ],
-        "passwordProtectionSettings": {
-          "passwordPolicyCharacters": [],
-          "passwordPolicyMinLength": 8
-        },
-        "signupAttributes": [
-          "EMAIL"
-        ],
-        "socialProviders": [],
-        "usernameAttributes": [],
-        "verificationMechanisms": [
-          "EMAIL"
-        ]
-      },
       "providerPlugin": "awscloudformation",
       "service": "Cognito",
-      "serviceType": "managed"
+      "serviceType": "imported"
     }
   },
   "function": {
@@ -60,6 +43,96 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
+    }
+  },
+  "parameters": {
+    "AMPLIFY_auth_k2bordermanagementcda755e2_allowUnauthenticatedIdentities": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
+    },
+    "AMPLIFY_auth_k2bordermanagementcda755e2_authRoleArn": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
+    },
+    "AMPLIFY_auth_k2bordermanagementcda755e2_authRoleName": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
+    },
+    "AMPLIFY_auth_k2bordermanagementcda755e2_identityPoolId": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
+    },
+    "AMPLIFY_auth_k2bordermanagementcda755e2_identityPoolName": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
+    },
+    "AMPLIFY_auth_k2bordermanagementcda755e2_nativeClientId": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
+    },
+    "AMPLIFY_auth_k2bordermanagementcda755e2_unauthRoleArn": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
+    },
+    "AMPLIFY_auth_k2bordermanagementcda755e2_unauthRoleName": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
+    },
+    "AMPLIFY_auth_k2bordermanagementcda755e2_userPoolId": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
+    },
+    "AMPLIFY_auth_k2bordermanagementcda755e2_userPoolName": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
+    },
+    "AMPLIFY_auth_k2bordermanagementcda755e2_webClientId": {
+      "usedBy": [
+        {
+          "category": "auth",
+          "resourceName": "k2bordermanagementcda755e2"
+        }
+      ]
     }
   }
 }
