@@ -1,20 +1,5 @@
 {
-  "api": {
-    "orderManagementApi": {
-      "dependsOn": [
-        {
-          "attributes": [
-            "Name",
-            "Arn"
-          ],
-          "category": "function",
-          "resourceName": "ordersHandler"
-        }
-      ],
-      "providerPlugin": "awscloudformation",
-      "service": "API Gateway"
-    }
-  },
+  "api": {},
   "auth": {
     "k2bordermanagement8095756e": {
       "customAuth": false,
