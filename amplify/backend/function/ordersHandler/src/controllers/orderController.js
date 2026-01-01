@@ -137,7 +137,7 @@ exports.createCart = async (req, res) => {
 exports.updateOrder = async (req, res) => {
      try {
          console.log('[updateOrder] Request body:', JSON.stringify(req.body));         
-         const {cart_id, user_id, order_number,status, total_amount, created_at, updated_at } = req.body.order;    
+         const {cart_id, user_id, order_number,status, total_amount, pay_method, created_at, updated_at } = req.body.order;    
          
          if (user_id == undefined || user_id == null) {
              return res.status(400).json({ error: 'Invalid user_id: must be a not null value' });
@@ -184,7 +184,7 @@ exports.updateCart = async (req, res) => {
          }
 
          console.log('[updateCart] Creating cart with data:', JSON.stringify(req.body));
-         const order = await orderDb.createCart(req.pool, req.body);         
+         const order = await orderDb.updateCart(req.pool, req.body);         
          console.log('[updateCart] cart updated successfully:', JSON.stringify(order));
          res.status(201).json(formatResponse(order));
      } catch (error) {

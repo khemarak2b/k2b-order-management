@@ -1,7 +1,9 @@
+select * from dev.addresses a 
+
 ------------- cart table---------------
 CREATE TABLE dev.carts (
-    cart_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id           UUID NULL, -- FK to users table (nullable for guest carts)
+    cart_id           BIGSERIAL  PRIMARY KEY ,
+    user_id           VARCHAR(120)  NULL, -- FK to users table (nullable for guest carts)
     status            VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     -- ACTIVE | CHECKED_OUT | ABANDONED
     created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -9,13 +11,15 @@ CREATE TABLE dev.carts (
     expires_at        TIMESTAMP NULL
 );
 
-CREATE UNIQUE INDEX dev.ux_cart_active_user
+CREATE UNIQUE INDEX ux_cart_active_user
 ON dev.carts(user_id)
 WHERE status = 'ACTIVE';
 
+commit;
+
 CREATE TABLE prod.carts (
-    cart_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id           UUID NULL, -- FK to users table (nullable for guest carts)
+    cart_id           BIGSERIAL  PRIMARY KEY ,
+    user_id           VARCHAR(120)   NULL, -- FK to users table (nullable for guest carts)
     status            VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     -- ACTIVE | CHECKED_OUT | ABANDONED
     created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -23,16 +27,18 @@ CREATE TABLE prod.carts (
     expires_at        TIMESTAMP NULL
 );
 
-CREATE UNIQUE INDEX prod.ux_cart_active_user
+CREATE UNIQUE INDEX ux_cart_active_user
 ON prod.carts(user_id)
 WHERE status = 'ACTIVE';
+
+commit;
 
 ------------- cart item table---------------
 
 CREATE TABLE dev.cart_items (
-    cart_item_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    cart_id           UUID NOT NULL,
-    product_id        UUID NOT NULL,
+    cart_item_id      BIGSERIAL  PRIMARY KEY ,
+    cart_id           BIGINT   NOT NULL,
+    product_id        BIGINT   NOT NULL,
     quantity          INTEGER NOT NULL CHECK (quantity > 0),
     unit_price        NUMERIC(12,2) NOT NULL,
     created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -48,9 +54,9 @@ CREATE TABLE dev.cart_items (
 );
 
 CREATE TABLE prod.cart_items (
-    cart_item_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    cart_id           UUID NOT NULL,
-    product_id        UUID NOT NULL,
+    cart_item_id      BIGSERIAL PRIMARY KEY,
+    cart_id           BIGINT NOT NULL,
+    product_id        BIGINT NOT NULL,
     quantity          INTEGER NOT NULL CHECK (quantity > 0),
     unit_price        NUMERIC(12,2) NOT NULL,
     created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -69,12 +75,13 @@ CREATE TABLE prod.cart_items (
 ------------- order table---------------
 
 CREATE TABLE dev.orders (
-    order_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    cart_id           UUID NOT NULL,
-    user_id           UUID NOT NULL,
+    order_id          BIGSERIAL PRIMARY KEY ,
+    cart_id           BIGINT NOT NULL,
+    user_id           BIGINT NOT NULL,
     order_number      VARCHAR(30) UNIQUE NOT NULL,
     status            VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     -- PENDING | PAID | SHIPPED | CANCELLED | COMPLETED
+    pay_method        VARCHAR(20) NOT NULL DEFAULT 'BANK_TRANSFER',
 
     total_amount      NUMERIC(12,2) NOT NULL,
     created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -88,15 +95,18 @@ CREATE TABLE dev.orders (
 CREATE UNIQUE INDEX ux_order_cart
 ON dev.orders(cart_id);
 
+commit; 
+
 CREATE TABLE prod.orders (
-    order_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    cart_id           UUID NOT NULL,
-    user_id           UUID NOT NULL,
+    order_id          BIGSERIAL PRIMARY KEY ,
+    cart_id           BIGINT NOT NULL,
+    user_id           BIGINT NOT NULL,
     order_number      VARCHAR(30) UNIQUE NOT NULL,
     status            VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     -- PENDING | PAID | SHIPPED | CANCELLED | COMPLETED
 
     total_amount      NUMERIC(12,2) NOT NULL,
+    pay_method        VARCHAR(20) NOT NULL DEFAULT 'BANK_TRANSFER',
     created_at        TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMP NOT NULL DEFAULT NOW(),
 
@@ -112,9 +122,9 @@ ON prod.orders(cart_id);
 ------------- order item  table---------------
 
 CREATE TABLE dev.order_items (
-    order_item_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id          UUID NOT NULL,
-    product_id        UUID NOT NULL,
+    order_item_id     BIGSERIAL PRIMARY KEY ,
+    order_id          BIGINT NOT NULL,
+    product_id        BIGINT NOT NULL,
     quantity          INTEGER NOT NULL CHECK (quantity > 0),
     unit_price        NUMERIC(12,2) NOT NULL,
     total_price       NUMERIC(12,2) GENERATED ALWAYS AS (quantity * unit_price) STORED,
@@ -127,9 +137,9 @@ CREATE TABLE dev.order_items (
 );
 
 CREATE TABLE prod.order_items (
-    order_item_id     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id          UUID NOT NULL,
-    product_id        UUID NOT NULL,
+    order_item_id     BIGSERIAL PRIMARY KEY ,
+    order_id          BIGINT NOT NULL,
+    product_id        BIGINT NOT NULL,
     quantity          INTEGER NOT NULL CHECK (quantity > 0),
     unit_price        NUMERIC(12,2) NOT NULL,
     total_price       NUMERIC(12,2) GENERATED ALWAYS AS (quantity * unit_price) STORED,
@@ -141,6 +151,8 @@ CREATE TABLE prod.order_items (
         ON DELETE CASCADE
 );
 
+commit;
+
 CREATE INDEX idx_cart_user ON dev.carts(user_id);
 CREATE INDEX idx_cart_items_cart ON dev.cart_items(cart_id);
 CREATE INDEX idx_orders_user ON dev.orders(user_id);
@@ -150,3 +162,4 @@ CREATE INDEX idx_cart_user ON prod.carts(user_id);
 CREATE INDEX idx_cart_items_cart ON prod.cart_items(cart_id);
 CREATE INDEX idx_orders_user ON prod.orders(user_id);
 CREATE INDEX idx_order_items_order ON prod.order_items(order_id);
+commit;

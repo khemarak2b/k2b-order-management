@@ -6,9 +6,9 @@ const orderController = require('../controllers/orderController');
 //router.get('/search/:query', orderController.searchProducts);
 //router.get('/', orderController.getAllProducts);
 //router.get('/:id/variants', orderController.getProductVariants);
-router.get('/:id', orderController.getOrder);
-router.delete('/:id', orderController.deleteOrder);
-router.post('/', orderController.createOrder);
-router.post('/', orderController.updateOrder);
+router.get('/:id', orderController.getCart);
+router.delete('/:id', orderController.deleteCart);
+router.post('/', orderController.createCart);
+router.post('/', orderController.updateCart);
 
 module.exports = router;
