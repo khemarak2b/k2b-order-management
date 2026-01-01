@@ -3,7 +3,6 @@ const cors = require("cors");
 const serverless = require("serverless-http");
 const { getDbPool } = require("/opt/nodejs/db");
 const orderRoutes = require("./routes/orders");
-const cartsRoutes = require("./routes/carts");
 
 
 let pool = null; // Module-level pool, reused across Lambda invocations
@@ -41,7 +40,6 @@ app.use(async (req, res, next) => {
 });
 
 app.use("/orders", orderRoutes);
-app.use("/carts", cartsRoutes);
 
 const handler = serverless(app);
 
