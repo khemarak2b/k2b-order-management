@@ -43,7 +43,7 @@ const createCart = async (pool, data) => {
                 .join(',');
 
             const queryItems = `
-                INSERT INTO ${schema}.order_items (${columnsCartItems.join(',')})
+                INSERT INTO ${schema}.cart_items (${columnsCartItems.join(',')})
                 VALUES ${placeholdersItems}
                 RETURNING *
             `;

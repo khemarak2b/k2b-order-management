@@ -30,13 +30,13 @@ exports.getCart = async (req, res) => {
             return res.status(400).json({ error: 'Cart is required' });
         }
         
-        const order = await orderDb.getCart(req.pool, id);
+        const cart = await orderDb.getCart(req.pool, id);
         
-        if (!order) {
+        if (!cart) {
             return res.status(404).json({ error: 'Cart not found' });
         }
         
-        res.json(formatResponse(order));
+        res.json(formatResponse(cart));
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
