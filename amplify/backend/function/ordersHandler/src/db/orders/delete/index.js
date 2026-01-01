@@ -1,3 +1,4 @@
 module.exports = {
-    deleteProduct: require('./deleteProduct')
+    deleteOrder: require('./deleteOrder'),
+    deleteCart: require('./deleteCart')
 };

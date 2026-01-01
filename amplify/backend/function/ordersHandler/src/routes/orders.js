@@ -7,8 +7,12 @@ const orderController = require('../controllers/orderController');
 //router.get('/', orderController.getAllProducts);
 //router.get('/:id/variants', orderController.getProductVariants);
 router.get('/:id', orderController.getOrder);
-//router.post('/', orderController.createProduct);
-//router.put('/:id', orderController.updateProduct);
-//router.delete('/:id', orderController.deleteProduct);
+router.get('/:cart_id', orderController.getCart);
+router.delete('/:id', orderController.deleteCart);
+router.delete('/:id', orderController.deleteOrder);
+router.post('/', orderController.createOrder);
+router.post('/', orderController.createCart);
+router.post('/', orderController.updateOrder);
+router.post('/', orderController.updateCart);
 
 module.exports = router;

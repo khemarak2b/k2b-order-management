@@ -1,30 +1,30 @@
-const updateProduct = async (pool, id, data) => {
+const updateCart = async (pool, id, data) => {
     const client = await pool.connect();
     const schema = process.env.ENVIRONMENT || 'dev';
     
     try {
-        const columns = Object.keys(data);
-        const values = Object.values(data);
+        const columnsOrder = Object.keys(data);
+        const valuesOrder = Object.values(data);
         
         // Build SET clause: name = $1, description = $2, ...
-        const setClause = columns.map((col, i) => `${col} = $${i + 1}`).join(', ');
+        const setClause = columnsOrder.map((col, i) => `${col} = $${i + 1}`).join(', ');
         
         // Add id as last parameter
-        values.push(id);
-        const idIndex = values.length;
+        valuesOrder.push(id);
+        const idIndex = valuesOrder.length;
         
         const query = `
-            UPDATE ${schema}.products 
+            UPDATE ${schema}.orders 
             SET ${setClause}
             WHERE id = $${idIndex}
             RETURNING *
         `;
         
-        const result = await client.query(query, values);
+        const result = await client.query(query, valuesOrder);
         return result.rows[0] || null;
     } finally {
         client.release();
     }
 };
 
-module.exports = updateProduct;
+module.exports = updateCart;

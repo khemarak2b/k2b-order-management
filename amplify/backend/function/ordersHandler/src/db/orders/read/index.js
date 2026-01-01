@@ -1,9 +1,13 @@
+const { createCart } = require('../create');
+
 module.exports = {
     //getAllProducts: require('./getAllProducts'),
     getOrder: require('./getOrder'),
-    //searchProducts: require('./searchProducts'),
-    //autocomplete: require('./autocomplete'),
-    //getProductVariants: require('./getProductVariants'),
-    //getProductCollections: require('./getProductCollections'),
-    //getProductImages: require('./getProductImages')
+    getCart: require('./getCart'),
+    deleteOrder: require('../delete/deleteOrder'),
+    deletCart: require('../delete/deleteCart'),
+    createOrder: require('../create/createOrder'),
+    createCart: require('../create/createCart'),
+    updateOrder: require('../update/updateOrder'),
+    updateCart: require('../update/updateCart'),
 };
