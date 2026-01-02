@@ -163,3 +163,14 @@ CREATE INDEX idx_cart_items_cart ON prod.cart_items(cart_id);
 CREATE INDEX idx_orders_user ON prod.orders(user_id);
 CREATE INDEX idx_order_items_order ON prod.order_items(order_id);
 commit;
+
+ALTER TABLE dev.orders
+ALTER COLUMN user_id TYPE VARCHAR(120)
+USING user_id::VARCHAR;
+
+ALTER TABLE prod.orders
+ALTER COLUMN user_id TYPE VARCHAR(120)
+USING user_id::VARCHAR;
+
+
+commit;
