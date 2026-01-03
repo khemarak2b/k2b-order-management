@@ -27,16 +27,16 @@ const createOrder = async (pool, data) => {
 
             const valuesOrderItems = [];
             const placeholdersItems = data.orderItems
-                .map((item, rowIndex) => {
-                    const rowPlaceholders = columnsOrderItems.map((col, colIndex) => {
+                .map(item => {
+                    const rowPlaceholders = columnsOrderItems.map(col => {
                         let value;
                         if (col === 'order_id') {
                             value = orderId; // set parent order_id
                         } else {
-                            value = item[col];
+                            value = item[col] === undefined ? null : item[col];
                         }
                         valuesOrderItems.push(value);
-                        return `$${rowIndex * columnsOrderItems.length + colIndex + 1}`;
+                        return `$${valuesOrderItems.length}`; 
                     });
                     return `(${rowPlaceholders.join(',')})`;
                 })
@@ -61,6 +61,3 @@ const createOrder = async (pool, data) => {
 };
 
 module.exports = createOrder;
-
-
-

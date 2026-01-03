@@ -78,7 +78,7 @@ exports.deleteCart = async (req, res) => {
 exports.createOrder = async (req, res) => {
      try {
          console.log('[createOrder] Request body:', JSON.stringify(req.body));         
-         const {cart_id, user_id, order_number,status, total_amount, created_at, updated_at } = req.body.order;    
+         const { user_id, status, total_amount } = req.body.order;    
          
          if (user_id == undefined || user_id == null) {
              return res.status(400).json({ error: 'Invalid user_id: must be a not null value' });
