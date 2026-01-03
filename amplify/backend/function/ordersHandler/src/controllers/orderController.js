@@ -105,20 +105,13 @@ exports.createOrder = async (req, res) => {
 exports.createCart = async (req, res) => {
      try {
          console.log('[createOrder] Request body:', JSON.stringify(req.body));         
-         const {  product_id , quantity , unit_price  } = req.body.cart;    
+         const {  user_id , status  } = req.body.cart;    
 
-         if (product_id == undefined || product_id == null) {
-             return res.status(400).json({ error: 'Invalid product_id: must be a not null value' });
-         }
-         if (unit_price !== undefined && unit_price !== null) {
-             if (isNaN(unit_price) || parseFloat(unit_price) < 0) {
+         if (user_id !== undefined && user_id !== null) {
                  return res.status(400).json({ error: 'Invalid unit_price: must be a non-negative number' });
-             }
          }
-         if (quantity !== undefined && quantity !== null) {
-             if (isNaN(quantity) || parseFloat(quantity) < 0) {
+         if (status !== undefined && status !== null) {
                  return res.status(400).json({ error: 'Invalid quantity: must be a non-negative number' });
-             }
          }
 
          console.log('[createCart] Creating cart with data:', JSON.stringify(req.body));
