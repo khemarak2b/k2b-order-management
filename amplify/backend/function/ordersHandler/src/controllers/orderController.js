@@ -109,11 +109,11 @@ exports.createCart = async (req, res) => {
          console.log('raw body:', req.body);      
          const {  user_id , status  } = req.body.cart;    
 
-         if (user_id !== undefined && user_id !== null) {
-                 return res.status(400).json({ error: 'Invalid unit_price: must be a non-negative number' });
+         if (user_id == undefined || user_id == null) {
+                 return res.status(400).json({ error: 'Invalid user_id: must be a non-negative number' });
          }
-         if (status !== undefined && status !== null) {
-                 return res.status(400).json({ error: 'Invalid quantity: must be a non-negative number' });
+         if (status == undefined && status == null) {
+                 return res.status(400).json({ error: 'Invalid status: must be a non-negative number' });
          }
 
          console.log('[createCart] Creating cart with data:', JSON.stringify(req.body));
