@@ -104,7 +104,9 @@ exports.createOrder = async (req, res) => {
 
 exports.createCart = async (req, res) => {
      try {
-         console.log('[createOrder] Request body:', JSON.stringify(req.body));         
+         console.log('[createOrder] Request body:', JSON.stringify(req.body));   
+         console.log('typeof req.body:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', typeof req.body);
+         console.log('raw body:', req.body);      
          const {  user_id , status  } = req.body.cart;    
 
          if (user_id !== undefined && user_id !== null) {
