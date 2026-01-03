@@ -83,7 +83,7 @@ exports.createOrder = async (req, res) => {
          if (user_id == undefined || user_id == null) {
              return res.status(400).json({ error: 'Invalid user_id: must be a not null value' });
          }
-         if (status !== undefined || status !== null) {
+         if (status == undefined || status == null) {
              return res.status(400).json({ error: 'Invalid status: must be a not null value' });
          }
          if (total_amount !== undefined && total_amount !== null) {
