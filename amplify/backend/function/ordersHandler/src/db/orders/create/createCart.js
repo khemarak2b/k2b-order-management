@@ -33,7 +33,7 @@ const createCart = async (pool, data) => {
                         if (col === 'cart_id') {
                             value = cartId; // set parent order_id
                         } else {
-                            value = item[col];
+                            value = item[col] === undefined ? null : item[col];
                         }
                         valuesCartItems.push(value);
                         return `$${rowIndex * valuesCartItems.length + colIndex + 1}`;
