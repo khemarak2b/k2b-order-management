@@ -105,11 +105,8 @@ exports.createOrder = async (req, res) => {
 exports.createCart = async (req, res) => {
      try {
          console.log('[createOrder] Request body:', JSON.stringify(req.body));         
-         const { cart_id , product_id , quantity , unit_price  } = req.body.order;    
+         const {  product_id , quantity , unit_price  } = req.body.cart;    
 
-         if (cart_id == undefined || cart_id == null) {
-             return res.status(400).json({ error: 'Invalid cart_id: must be a not null value' });
-         }
          if (product_id == undefined || product_id == null) {
              return res.status(400).json({ error: 'Invalid product_id: must be a not null value' });
          }
@@ -164,7 +161,7 @@ exports.updateOrder = async (req, res) => {
 exports.updateCart = async (req, res) => {
      try {
          console.log('[updateCart] Request body:', JSON.stringify(req.body));         
-         const {cart_item_id , cart_id , product_id , quantity , unit_price , created_at , updated_at } = req.body.order;    
+         const {cart_item_id , cart_id , product_id , quantity , unit_price , created_at , updated_at } = req.body.cart;    
 
          if (cart_id == undefined || cart_id == null) {
              return res.status(400).json({ error: 'Invalid cart_id: must be a not null value' });
