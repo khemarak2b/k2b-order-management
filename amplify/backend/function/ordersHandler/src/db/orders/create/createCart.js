@@ -27,26 +27,26 @@ const createCart = async (pool, data) => {
 
             const valuesCartItems = [];
             const placeholdersItems = data.cart_items
-                .map((item, rowIndex) => {
-                    const rowPlaceholders = columnsCartItems.map((col, colIndex) => {
+                .map(item => {
+                    const rowPlaceholders = columnsCartItems.map(col => {
                         let value;
                         if (col === 'cart_id') {
-                            value = cartId; // set parent order_id
+                            value = cartId; // set parent cart_id
                         } else {
-                            value = item[col] === undefined ? null : item[col];
+                            value = item[col] === undefined ? null : item[col]; // replace undefined
                         }
                         valuesCartItems.push(value);
-                        return `$${rowIndex * valuesCartItems.length + colIndex + 1}`;
+                        return `$${valuesCartItems.length}`; // sequential numbering
                     });
                     return `(${rowPlaceholders.join(',')})`;
                 })
                 .join(',');
 
             const queryItems = `
-                INSERT INTO ${schema}.cart_items (${columnsCartItems.join(',')})
-                VALUES ${placeholdersItems}
-                RETURNING *
-            `;
+                        INSERT INTO ${schema}.cart_items (${columnsCartItems.join(',')})
+                        VALUES ${placeholdersItems}
+                        RETURNING *
+`;
 
             console.log(">>>>>>>>>>>>>>." + queryItems);
                         console.log(" valuesCartItems???????????????????????" + valuesCartItems);
