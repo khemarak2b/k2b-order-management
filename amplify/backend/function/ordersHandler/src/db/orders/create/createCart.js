@@ -21,8 +21,8 @@ const createCart = async (pool, data) => {
             const columnsCartItems = Object.keys(data.cart_items[0]);
 
             // Ensure order_id is included in the items
-            if (!columnsCartItems.includes('order_id')) {
-                columnsCartItems.unshift('order_id'); // add at start
+            if (!columnsCartItems.includes('cart_id')) {
+                columnsCartItems.unshift('cart_id'); // add at start
             }
 
             const valuesCartItems = [];
