@@ -48,6 +48,10 @@ const createCart = async (pool, data) => {
                 RETURNING *
             `;
 
+            console.log(">>>>>>>>>>>>>>." + queryItems);
+                        console.log(" valuesCartItems???????????????????????" + valuesCartItems);
+
+
             const resultOrderItems = await client.query(queryItems, valuesCartItems);
             await client.query('COMMIT');
             return {
