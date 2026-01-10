@@ -5,7 +5,7 @@
      try {
          // Get order         
          const cartResult = await client.query(
-             `SELECT * FROM ${schema}.carts WHERE cart_id = $1`,
+             `SELECT * FROM ${schema}.carts WHERE status = 'ACTIVE' and user_id = $1`,
              [id]
          );
          

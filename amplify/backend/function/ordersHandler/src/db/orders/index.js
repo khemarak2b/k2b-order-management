@@ -1,5 +1,6 @@
 const { 
     getOrder,
+    getOrders,
     getCart
 } = require('./read');
 const { createOrder, createCart } = require('./create');
@@ -8,6 +9,7 @@ const { deleteOrder , deleteCart} = require('./delete');
  
 module.exports = {
    getOrder,
+   getOrders,
    getCart,
    deleteOrder,
    deleteCart,

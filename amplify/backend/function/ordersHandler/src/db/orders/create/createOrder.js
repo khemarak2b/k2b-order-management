@@ -15,6 +15,7 @@ const createOrder = async (pool, data) => {
         `;
         const resultOrders = await client.query(queryOrders, valuesOrder);
         const orderId = resultOrders.rows[0].order_id; 
+        const cartId = resultOrders.rows[0].cart_id;
 
         // ---------- INSERT ORDER ITEMS ----------
         if (data.orderItems && data.orderItems.length > 0) {
@@ -49,6 +50,16 @@ const createOrder = async (pool, data) => {
             `;
 
             const resultOrderItems = await client.query(queryItems, valuesOrderItems);
+
+            await client.query(
+                    `
+                    UPDATE ${schema}.carts
+                    SET status = $1
+                    WHERE cart_id = $2
+                    `,
+                    ['CLOSED', cartId]
+                );
+
             await client.query('COMMIT');
             return {
                 resultOrders: resultOrders.rows[0],
