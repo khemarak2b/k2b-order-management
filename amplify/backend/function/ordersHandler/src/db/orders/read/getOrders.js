@@ -15,7 +15,7 @@ const getOrders = async (pool, id) => {
          
          const order = orderResult.rows[0];         
          // Get variants with inventory and media
-         const ordeItemsResult = await client.query(
+         const orderItemsResult = await client.query(
              `SELECT oi.order_item_id ,  oi.order_id , oi.product_id , oi.quantity, oi.unit_price, oi.total_price , oi.created_at
               FROM ${schema}.order_items oi
               WHERE oi.order_id = $1
@@ -26,7 +26,7 @@ const getOrders = async (pool, id) => {
          
          return {
              ...order,
-             items: ordeItemsResult.rows,   
+             items: orderItemsResult.rows,   
          };         
      } finally {
          client.release();

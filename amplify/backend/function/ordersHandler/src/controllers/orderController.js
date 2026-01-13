@@ -1,5 +1,6 @@
 const orderDb = require('../db/orders');
 const { formatResponse } = require('../utils/responseFormatter');
+const { toSnakeCase } = require('../utils/caseConverter');
 
 exports.getOrder = async (req, res) => {
     try {
@@ -24,13 +25,13 @@ exports.getOrder = async (req, res) => {
 
 exports.getOrders = async (req, res) => {
     try {
-        const { user_id } = req.params;
+        const { userId } = req.params;
         
-        if (!user_id) {
-            return res.status(400).json({ error: 'Order ID is required' });
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
         }
         
-        const order = await orderDb.getOrders(req.pool, user_id);
+        const order = await orderDb.getOrders(req.pool, userId);
         
         if (!order) {
             return res.status(404).json({ error: 'Orders not found' });
@@ -99,22 +100,23 @@ exports.deleteCart = async (req, res) => {
 exports.createOrder = async (req, res) => {
      try {
          console.log('[createOrder] Request body:', JSON.stringify(req.body));         
-         const { user_id, status, total_amount } = req.body.order;    
+         const { userId, status, totalAmount } = req.body.order;    
          
-         if (user_id == undefined || user_id == null) {
-             return res.status(400).json({ error: 'Invalid user_id: must be a not null value' });
+         if (userId == undefined || userId == null) {
+             return res.status(400).json({ error: 'Invalid userId: must be a not null value' });
          }
          if (status == undefined || status == null) {
              return res.status(400).json({ error: 'Invalid status: must be a not null value' });
          }
-         if (total_amount !== undefined && total_amount !== null) {
-             if (isNaN(total_amount) || parseFloat(total_amount) < 0) {
-                 return res.status(400).json({ error: 'Invalid total_amount: must be a non-negative number' });
+         if (totalAmount !== undefined && totalAmount !== null) {
+             if (isNaN(totalAmount) || parseFloat(totalAmount) < 0) {
+                 return res.status(400).json({ error: 'Invalid totalAmount: must be a non-negative number' });
              }
          }      
          
-         console.log('[createOrder] Creating Order with data:', JSON.stringify(req.body));
-         const order = await orderDb.createOrder(req.pool, req.body);         
+         const dbData = toSnakeCase(req.body.order);
+         console.log('[createOrder] Creating Order with data:', JSON.stringify(dbData));
+         const order = await orderDb.createOrder(req.pool, dbData);         
          console.log('[createOrder] Order created successfully:', JSON.stringify(order));
          res.status(201).json(formatResponse(order));
      } catch (error) {
@@ -125,20 +127,19 @@ exports.createOrder = async (req, res) => {
 
 exports.createCart = async (req, res) => {
      try {
-         console.log('[createOrder] Request body:', JSON.stringify(req.body));   
-         console.log('typeof req.body:>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>', typeof req.body);
-         console.log('raw body:', req.body);      
-         const {  user_id , status  } = req.body.cart;    
+         console.log('[createCart] Request body:', JSON.stringify(req.body));   
+         const {  userId , status  } = req.body.cart;    
 
-         if (user_id == undefined || user_id == null) {
-                 return res.status(400).json({ error: 'Invalid user_id: must be a non-negative number' });
+         if (userId == undefined || userId == null) {
+                 return res.status(400).json({ error: 'Invalid userId: must be a non-negative number' });
          }
          if (status == undefined && status == null) {
                  return res.status(400).json({ error: 'Invalid status: must be a non-negative number' });
          }
 
-         console.log('[createCart] Creating cart with data:', JSON.stringify(req.body));
-         const order = await orderDb.createCart(req.pool, req.body);         
+         const dbData = toSnakeCase(req.body.cart);
+         console.log('[createCart] Creating cart with data:', JSON.stringify(dbData));
+         const order = await orderDb.createCart(req.pool, dbData);         
          console.log('[createCart] cart created successfully:', JSON.stringify(order));
          res.status(201).json(formatResponse(order));
      } catch (error) {
@@ -150,24 +151,25 @@ exports.createCart = async (req, res) => {
 exports.updateOrder = async (req, res) => {
      try {
          console.log('[updateOrder] Request body:', JSON.stringify(req.body));         
-         const {cart_id, user_id, order_number,status, total_amount, pay_method, created_at, updated_at } = req.body.order;    
+         const {cartId, userId, orderNumber, status, totalAmount, payMethod, createdAt, updatedAt } = req.body.order;    
          
-         if (user_id == undefined || user_id == null) {
-             return res.status(400).json({ error: 'Invalid user_id: must be a not null value' });
+         if (userId == undefined || userId == null) {
+             return res.status(400).json({ error: 'Invalid userId: must be a not null value' });
          }
          if (status !== undefined || status !== null) {
              return res.status(400).json({ error: 'Invalid status: must be a not null value' });
          }
-         if (total_amount !== undefined && total_amount !== null) {
-             if (isNaN(total_amount) || parseFloat(total_amount) < 0) {
-                 return res.status(400).json({ error: 'Invalid total_amount: must be a non-negative number' });
+         if (totalAmount !== undefined && totalAmount !== null) {
+             if (isNaN(totalAmount) || parseFloat(totalAmount) < 0) {
+                 return res.status(400).json({ error: 'Invalid totalAmount: must be a non-negative number' });
              }
          }      
          
-         console.log('[updateOrder] Creating Order with data:', JSON.stringify(req.body));
-         const order = await orderDb.updateOrder(req.pool, req.body);         
+         const dbData = toSnakeCase(req.body.order);
+         console.log('[updateOrder] Updating Order with data:', JSON.stringify(dbData));
+         const order = await orderDb.updateOrder(req.pool, dbData);         
          console.log('[updateOrder] Order updated successfully:', JSON.stringify(order));
-         res.status(201).json(formatResponse(order));
+         res.status(200).json(formatResponse(order));
      } catch (error) {
          console.error('[updateOrder] Error:', error.message, error.stack);
          res.status(500).json({ error: 'Internal server error' });
@@ -177,17 +179,17 @@ exports.updateOrder = async (req, res) => {
 exports.updateCart = async (req, res) => {
      try {
          console.log('[updateCart] Request body:', JSON.stringify(req.body));         
-         const {cart_item_id , cart_id , product_id , quantity , unit_price , created_at , updated_at } = req.body.cart;    
+         const {cartItemId , cartId , productId , quantity , unitPrice , createdAt , updatedAt } = req.body.cart;    
 
-         if (cart_id == undefined || cart_id == null) {
-             return res.status(400).json({ error: 'Invalid cart_id: must be a not null value' });
+         if (cartId == undefined || cartId == null) {
+             return res.status(400).json({ error: 'Invalid cartId: must be a not null value' });
          }
-         if (product_id == undefined || product_id == null) {
-             return res.status(400).json({ error: 'Invalid product_id: must be a not null value' });
+         if (productId == undefined || productId == null) {
+             return res.status(400).json({ error: 'Invalid productId: must be a not null value' });
          }
-         if (unit_price !== undefined && unit_price !== null) {
-             if (isNaN(unit_price) || parseFloat(unit_price) < 0) {
-                 return res.status(400).json({ error: 'Invalid unit_price: must be a non-negative number' });
+         if (unitPrice !== undefined && unitPrice !== null) {
+             if (isNaN(unitPrice) || parseFloat(unitPrice) < 0) {
+                 return res.status(400).json({ error: 'Invalid unitPrice: must be a non-negative number' });
              }
          }
          if (quantity !== undefined && quantity !== null) {
@@ -196,10 +198,11 @@ exports.updateCart = async (req, res) => {
              }
          }
 
-         console.log('[updateCart] Creating cart with data:', JSON.stringify(req.body));
-         const order = await orderDb.updateCart(req.pool, req.body);         
+         const dbData = toSnakeCase(req.body.cart);
+         console.log('[updateCart] Updating cart with data:', JSON.stringify(dbData));
+         const order = await orderDb.updateCart(req.pool, dbData);         
          console.log('[updateCart] cart updated successfully:', JSON.stringify(order));
-         res.status(201).json(formatResponse(order));
+         res.status(200).json(formatResponse(order));
      } catch (error) {
          console.error('[updateCart] Error:', error.message, error.stack);
          res.status(500).json({ error: 'Internal server error' });
