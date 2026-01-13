@@ -128,16 +128,16 @@ exports.createOrder = async (req, res) => {
 exports.createCart = async (req, res) => {
      try {
          console.log('[createCart] Request body:', JSON.stringify(req.body));   
-         const {  userId , status  } = req.body.cart;    
+         const {  userId , status  } = req.body;    
 
          if (userId == undefined || userId == null) {
-                 return res.status(400).json({ error: 'Invalid userId: must be a non-negative number' });
+                 return res.status(400).json({ error: 'Invalid userId: must be a not null value' });
          }
-         if (status == undefined && status == null) {
-                 return res.status(400).json({ error: 'Invalid status: must be a non-negative number' });
+         if (status == undefined || status == null) {
+                 return res.status(400).json({ error: 'Invalid status: must be a not null value' });
          }
 
-         const dbData = toSnakeCase(req.body.cart);
+         const dbData = toSnakeCase(req.body);
          console.log('[createCart] Creating cart with data:', JSON.stringify(dbData));
          const order = await orderDb.createCart(req.pool, dbData);         
          console.log('[createCart] cart created successfully:', JSON.stringify(order));
