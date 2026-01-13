@@ -5,7 +5,7 @@ const deleteCart = async (pool, id) => {
     try {
 
         const cartResult = await client.query(
-             `SELECT * FROM ${schema}.carts WHERE user_id = $1`,
+             `SELECT * FROM ${schema}.carts WHERE status = 'ACTIVE' user_id = $1`,
              [id]
          );
         const result_cart_items = await client.query(
