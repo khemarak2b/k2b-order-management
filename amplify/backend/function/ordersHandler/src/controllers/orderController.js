@@ -183,31 +183,76 @@ exports.updateOrder = async (req, res) => {
   }
 };
 
-exports.updateCart = async (req, res) => {
+exports.addCartItem = async (req, res) => {
   try {
-    console.log("[updateCart] Request body:", JSON.stringify(req.body));
+    console.log("[addCartItem] Request body:", JSON.stringify(req.body));
     const { userId } = req.params;
-    const { cart, cart_items } = req.body;
+    const itemData = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: "User ID is required" });
     }
 
-    if (!cart || !Array.isArray(cart_items)) {
-      return res.status(400).json({ error: "Invalid request: cart and cart_items are required" });
+    if (!itemData || Object.keys(itemData).length === 0) {
+      return res.status(400).json({ error: "Item data is required" });
     }
 
-    const dbData = {
-      cart: toSnakeCase(cart),
-      cart_items: cart_items.map(item => toSnakeCase(item))
-    };
-    
-    console.log("[updateCart] Updating cart with data:", JSON.stringify(dbData));
-    const result = await orderDb.updateCart(req.pool, dbData);
-    console.log("[updateCart] cart updated successfully:", JSON.stringify(result));
-    res.status(200).json(formatResponse(result));
+    const dbData = toSnakeCase(itemData);
+    console.log("[addCartItem] Adding item:", JSON.stringify(dbData));
+    const item = await orderDb.addCartItem(req.pool, userId, dbData);
+    console.log("[addCartItem] Item added successfully:", JSON.stringify(item));
+    res.status(201).json(formatResponse(item));
   } catch (error) {
-    console.error("[updateCart] Error:", error.message, error.stack);
+    console.error("[addCartItem] Error:", error.message, error.stack);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.updateCartItem = async (req, res) => {
+  try {
+    console.log("[updateCartItem] Request body:", JSON.stringify(req.body));
+    const { userId, itemId } = req.params;
+    const updateData = req.body;
+
+    if (!userId || !itemId) {
+      return res.status(400).json({ error: "User ID and Item ID are required" });
+    }
+
+    if (!updateData || Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: "Update data is required" });
+    }
+
+    const dbData = toSnakeCase(updateData);
+    console.log("[updateCartItem] Updating item:", JSON.stringify(dbData));
+    const item = await orderDb.updateCartItem(req.pool, itemId, dbData);
+    console.log("[updateCartItem] Item updated successfully:", JSON.stringify(item));
+    res.status(200).json(formatResponse(item));
+  } catch (error) {
+    console.error("[updateCartItem] Error:", error.message, error.stack);
+    if (error.message === "Cart item not found") {
+      return res.status(404).json({ error: "Cart item not found" });
+    }
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.deleteCartItem = async (req, res) => {
+  try {
+    const { userId, itemId } = req.params;
+
+    if (!userId || !itemId) {
+      return res.status(400).json({ error: "User ID and Item ID are required" });
+    }
+
+    const deleted = await orderDb.deleteCartItem(req.pool, itemId);
+
+    if (!deleted) {
+      return res.status(404).json({ error: "Cart item not found" });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    console.error("[deleteCartItem] Error:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

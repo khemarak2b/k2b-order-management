@@ -3,9 +3,9 @@ const {
     getOrders,
     getCart
 } = require('./read');
-const { createOrder, createCart } = require('./create');
-const { updateOrder , updateCart } = require('./update');
-const { deleteOrder , deleteCart} = require('./delete');
+const { createOrder, createCart, addCartItem } = require('./create');
+const { updateOrder, updateCart, updateCartItem } = require('./update');
+const { deleteOrder, deleteCart, deleteCartItem } = require('./delete');
  
 module.exports = {
    getOrder,
@@ -13,8 +13,11 @@ module.exports = {
    getCart,
    deleteOrder,
    deleteCart,
+   deleteCartItem,
    createOrder,
    createCart,
+   addCartItem,
    updateOrder,
-   updateCart
+   updateCart,
+   updateCartItem
 };

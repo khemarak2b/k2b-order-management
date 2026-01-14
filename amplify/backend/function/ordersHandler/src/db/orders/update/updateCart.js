@@ -65,8 +65,9 @@ const updateCart = async (pool, data) => {
         );
       } else {
         // INSERT
-        const cols = Object.keys(item);
-        const vals = Object.values(item);
+        const { cart_id, ...fields } = item; // Remove cart_id from item
+        const cols = Object.keys(fields);
+        const vals = Object.values(fields);
 
         await client.query(
           `

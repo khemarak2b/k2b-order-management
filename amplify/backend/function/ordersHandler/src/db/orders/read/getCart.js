@@ -25,7 +25,7 @@ const getCart = async (pool, userId) => {
                  product_name,
                  price,
                  variant_title,
-                 selected_options,
+                 selected_option,
                  image,
                  quantity,
                  currency_code,

@@ -1,4 +1,5 @@
 module.exports = {
     updateOrder: require('./updateOrder'),
-    updateCart: require('./updateCart')
+    updateCart: require('./updateCart'),
+    updateCartItem: require('./updateCartItem')
 };
