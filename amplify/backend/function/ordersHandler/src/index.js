@@ -4,7 +4,6 @@ const serverless = require("serverless-http");
 const { getDbPool } = require("/opt/nodejs/db");
 const orderRoutes = require("./routes/orders");
 
-
 let pool = null; // Module-level pool, reused across Lambda invocations
 
 const getPool = async () => {
@@ -16,10 +15,16 @@ const getPool = async () => {
 
 const app = express();
 
+const ALLOWED_ORIGINS = new Set([
+  "http://localhost:3008",
+  "https://dkuruf9x2pu8c.cloudfront.net",
+  "https://dev-app.k2b.com.au",
+  "https://app.k2b.com.au",
+]);
+
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = ["http://localhost:3008", "https://dkuruf9x2pu8c.cloudfront.net"];
-    if (allowedOrigins.includes(origin) || !origin) {
+    if (ALLOWED_ORIGINS.has(origin) || !origin) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
