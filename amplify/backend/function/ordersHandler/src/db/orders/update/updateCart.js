@@ -5,27 +5,32 @@ const updateCart = async (pool, data) => {
   try {
     await client.query("BEGIN");
 
-    /* ---------- UPDATE CART ---------- */
-    const { id, ...cartFields } = data.cart;
-    const cartId = id;
+    /* ---------- GET OR CREATE CART ---------- */
+    const { user_id } = data.cart;
 
-    const cartColumns = Object.keys(cartFields);
-    const cartValues = Object.values(cartFields);
+    if (!user_id) {
+      throw new Error("user_id is required");
+    }
 
-    if (cartColumns.length > 0) {
-      const setClause = cartColumns.map((col, i) => `${col} = $${i + 1}`).join(", ");
+    // Get existing cart for user
+    const cartResult = await client.query(
+      `SELECT id FROM ${schema}.carts WHERE user_id = $1`,
+      [user_id]
+    );
 
-      cartColumns.push("updated_at");
-      cartValues.push(new Date());
+    let cartId;
 
-      await client.query(
-        `
-                UPDATE ${schema}.carts
-                SET ${setClause}, updated_at = NOW()
-                WHERE id = $${cartColumns.length}
-                `,
-        [...cartValues, cartId]
+    if (cartResult.rows.length === 0) {
+      // Create new cart if doesn't exist
+      const newCartResult = await client.query(
+        `INSERT INTO ${schema}.carts (user_id) VALUES ($1) RETURNING id`,
+        [user_id]
       );
+      cartId = newCartResult.rows[0].id;
+    } else {
+      cartId = cartResult.rows[0].id;
+      // Update cart's updated_at timestamp
+      await client.query(`UPDATE ${schema}.carts SET updated_at = NOW() WHERE id = $1`, [cartId]);
     }
 
     /* ---------- EXISTING CART ITEMS ---------- */
@@ -52,10 +57,10 @@ const updateCart = async (pool, data) => {
 
         await client.query(
           `
-                    UPDATE ${schema}.cart_items
-                    SET ${setClause}, updated_at = NOW()
-                    WHERE id = $${cols.length + 1}
-                    `,
+          UPDATE ${schema}.cart_items
+          SET ${setClause}, updated_at = NOW()
+          WHERE id = $${cols.length + 1}
+          `,
           [...vals, id]
         );
       } else {
@@ -65,16 +70,16 @@ const updateCart = async (pool, data) => {
 
         await client.query(
           `
-                    INSERT INTO ${schema}.cart_items (cart_id, ${cols.join(", ")})
-                    VALUES ($1, ${cols.map((_, i) => `$${i + 2}`).join(", ")})
-                    `,
+          INSERT INTO ${schema}.cart_items (cart_id, ${cols.join(", ")})
+          VALUES ($1, ${cols.map((_, i) => `$${i + 2}`).join(", ")})
+          `,
           [cartId, ...vals]
         );
       }
     }
 
     await client.query("COMMIT");
-    return { message: "Cart updated successfully" };
+    return { message: "Cart updated successfully", cart_id: cartId };
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
