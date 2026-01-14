@@ -10,10 +10,10 @@ router.put("/:id", orderController.updateOrder);
 router.delete("/:id", orderController.deleteOrder);
 
 // Carts
-router.get("/cart/:id", orderController.getCart);
+router.get("/cart/:userId", orderController.getCart);
 router.post("/cart", orderController.createCart);
-router.put("/cart/:id", orderController.updateCart);
-router.delete("/cart/:id", orderController.deleteCart);
+router.put("/cart/:userId", orderController.updateCart);
+router.delete("/cart/:userId", orderController.deleteCart);
 
 module.exports = router;
 

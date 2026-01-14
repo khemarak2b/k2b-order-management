@@ -46,13 +46,13 @@ exports.getOrders = async (req, res) => {
 
 exports.getCart = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { userId } = req.params;
 
-    if (!id) {
-      return res.status(400).json({ error: "Cart is required" });
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
     }
 
-    const cart = await orderDb.getCart(req.pool, id);
+    const cart = await orderDb.getCart(req.pool, userId);
 
     if (!cart) {
       return res.status(404).json({ error: "Cart not found" });
@@ -83,13 +83,18 @@ exports.deleteOrder = async (req, res) => {
 
 exports.deleteCart = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { userId } = req.params;
 
-    if (!id) {
-      return res.status(400).json({ error: "Cart ID is required" });
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
     }
 
-    await orderDb.deleteCart(req.pool, id);
+    const deleted = await orderDb.deleteCart(req.pool, userId);
+    
+    if (!deleted) {
+      return res.status(404).json({ error: "Cart not found" });
+    }
+
     res.status(204).send();
   } catch (error) {
     console.error(error);
@@ -128,20 +133,22 @@ exports.createOrder = async (req, res) => {
 exports.createCart = async (req, res) => {
   try {
     console.log("[createCart] Request body:", JSON.stringify(req.body));
-    const { userId, status } = req.body.cart;
+    const { cart, cart_items } = req.body;
+    const { userId } = cart || {};
 
-    if (userId == undefined || userId == null) {
+    if (!userId) {
       return res.status(400).json({ error: "Invalid userId: must be a not null value" });
     }
-    if (status == undefined || status == null) {
-      return res.status(400).json({ error: "Invalid status: must be a not null value" });
-    }
 
-    const dbData = toSnakeCase(req.body);
+    const dbData = {
+      cart: toSnakeCase({ user_id: userId }),
+      cart_items: Array.isArray(cart_items) ? cart_items.map(item => toSnakeCase(item)) : []
+    };
+
     console.log("[createCart] Creating cart with data:", JSON.stringify(dbData));
-    const order = await orderDb.createCart(req.pool, dbData);
-    console.log("[createCart] cart created successfully:", JSON.stringify(order));
-    res.status(201).json(formatResponse(order));
+    const result = await orderDb.createCart(req.pool, dbData);
+    console.log("[createCart] cart created successfully:", JSON.stringify(result));
+    res.status(201).json(formatResponse(result));
   } catch (error) {
     console.error("[createCart] Error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
@@ -179,30 +186,26 @@ exports.updateOrder = async (req, res) => {
 exports.updateCart = async (req, res) => {
   try {
     console.log("[updateCart] Request body:", JSON.stringify(req.body));
-    const { cartItemId, cartId, productId, quantity, unitPrice, createdAt, updatedAt } = req.body.cart;
+    const { userId } = req.params;
+    const { cart, cart_items } = req.body;
 
-    if (cartId == undefined || cartId == null) {
-      return res.status(400).json({ error: "Invalid cartId: must be a not null value" });
-    }
-    if (productId == undefined || productId == null) {
-      return res.status(400).json({ error: "Invalid productId: must be a not null value" });
-    }
-    if (unitPrice !== undefined && unitPrice !== null) {
-      if (isNaN(unitPrice) || parseFloat(unitPrice) < 0) {
-        return res.status(400).json({ error: "Invalid unitPrice: must be a non-negative number" });
-      }
-    }
-    if (quantity !== undefined && quantity !== null) {
-      if (isNaN(quantity) || parseFloat(quantity) < 0) {
-        return res.status(400).json({ error: "Invalid quantity: must be a non-negative number" });
-      }
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
     }
 
-    const dbData = toSnakeCase(req.body.cart);
+    if (!cart || !Array.isArray(cart_items)) {
+      return res.status(400).json({ error: "Invalid request: cart and cart_items are required" });
+    }
+
+    const dbData = {
+      cart: toSnakeCase(cart),
+      cart_items: cart_items.map(item => toSnakeCase(item))
+    };
+    
     console.log("[updateCart] Updating cart with data:", JSON.stringify(dbData));
-    const order = await orderDb.updateCart(req.pool, dbData);
-    console.log("[updateCart] cart updated successfully:", JSON.stringify(order));
-    res.status(200).json(formatResponse(order));
+    const result = await orderDb.updateCart(req.pool, dbData);
+    console.log("[updateCart] cart updated successfully:", JSON.stringify(result));
+    res.status(200).json(formatResponse(result));
   } catch (error) {
     console.error("[updateCart] Error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
