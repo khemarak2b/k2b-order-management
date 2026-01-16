@@ -1,4 +1,4 @@
-const { getCart } = require("./getCart");
+const getCart = require("./getCart");
 
 module.exports = {
   getCart,
