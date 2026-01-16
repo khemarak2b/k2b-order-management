@@ -3,41 +3,44 @@ const createOrder = async (pool, data) => {
     const schema = process.env.ENVIRONMENT || 'dev';
 
     try {
-        const columnsOrder = Object.keys(data.order);
-        const valuesOrder = Object.values(data.order);
-        const placeholders = columnsOrder.map((_, i) => `$${i + 1}`).join(', ');
+        const { order_items, ...orderData } = data;
+        const orderColumns = Object.keys(orderData);
+        const orderValues = Object.values(orderData);
+        const placeholders = orderColumns.map((_, i) => `$${i + 1}`).join(', ');
+
         await client.query('BEGIN');
 
+        // Insert order
         const queryOrders = `
-            INSERT INTO ${schema}.orders (${columnsOrder.join(', ')})
+            INSERT INTO ${schema}.orders (${orderColumns.join(', ')})
             VALUES (${placeholders})
             RETURNING *
         `;
-        const resultOrders = await client.query(queryOrders, valuesOrder);
-        const orderId = resultOrders.rows[0].order_id; 
-        const cartId = resultOrders.rows[0].cart_id;
+        const resultOrders = await client.query(queryOrders, orderValues);
+        const orderId = resultOrders.rows[0].id;
 
-        // ---------- INSERT ORDER ITEMS ----------
-        if (data.orderItems && data.orderItems.length > 0) {
-            const columnsOrderItems = Object.keys(data.orderItems[0]);
+        // Insert order items if provided
+        let orderItemsResult = [];
+        if (order_items && order_items.length > 0) {
+            const columnsOrderItems = Object.keys(order_items[0]);
 
             // Ensure order_id is included in the items
             if (!columnsOrderItems.includes('order_id')) {
-                columnsOrderItems.unshift('order_id'); // add at start
+                columnsOrderItems.unshift('order_id');
             }
 
             const valuesOrderItems = [];
-            const placeholdersItems = data.orderItems
+            const placeholdersItems = order_items
                 .map(item => {
                     const rowPlaceholders = columnsOrderItems.map(col => {
                         let value;
                         if (col === 'order_id') {
-                            value = orderId; // set parent order_id
+                            value = orderId;
                         } else {
                             value = item[col] === undefined ? null : item[col];
                         }
                         valuesOrderItems.push(value);
-                        return `$${valuesOrderItems.length}`; 
+                        return `$${valuesOrderItems.length}`;
                     });
                     return `(${rowPlaceholders.join(',')})`;
                 })
@@ -50,22 +53,17 @@ const createOrder = async (pool, data) => {
             `;
 
             const resultOrderItems = await client.query(queryItems, valuesOrderItems);
-
-            await client.query(
-                    `
-                    UPDATE ${schema}.carts
-                    SET status = $1
-                    WHERE cart_id = $2
-                    `,
-                    ['CLOSED', cartId]
-                );
-
-            await client.query('COMMIT');
-            return {
-                resultOrders: resultOrders.rows[0],
-                items: resultOrderItems.rows
-            };
+            orderItemsResult = resultOrderItems.rows;
         }
+
+        await client.query('COMMIT');
+        return {
+            order: resultOrders.rows[0],
+            items: orderItemsResult
+        };
+    } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
     } finally {
         client.release();
     }

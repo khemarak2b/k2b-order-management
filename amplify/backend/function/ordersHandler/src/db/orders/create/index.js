@@ -1,5 +1,6 @@
 module.exports = {
     createOrder: require('./createOrder'),
     createCart: require('./createCart'),
-    addCartItem: require('./addCartItem')
+    addCartItem: require('./addCartItem'),
+    createPayment: require('./createPayment')
 };

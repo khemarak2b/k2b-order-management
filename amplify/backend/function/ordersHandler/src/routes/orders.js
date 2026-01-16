@@ -2,14 +2,20 @@ const express = require("express");
 const router = express.Router();
 const orderController = require("../controllers/orderController");
 
-// Orders
-router.get("/:id", orderController.getOrder);
+// Orders endpoints
 router.get("/user/:userId", orderController.getOrders);
 router.post("/", orderController.createOrder);
 router.put("/:id", orderController.updateOrder);
 router.delete("/:id", orderController.deleteOrder);
+router.get("/:id", orderController.getOrder);
 
-// Carts
+// Payments sub-resource endpoints
+router.post("/:orderId/payments", orderController.createPayment);
+router.get("/:orderId/payments", orderController.getPayments);
+router.get("/:orderId/payments/:paymentId", orderController.getPayment);
+router.put("/:orderId/payments/:paymentId", orderController.updatePayment);
+
+// Cart endpoints
 router.get("/cart/:userId", orderController.getCart);
 router.post("/cart", orderController.createCart);
 router.post("/cart/:userId/items", orderController.addCartItem);
@@ -18,14 +24,3 @@ router.delete("/cart/:userId/items/:itemId", orderController.deleteCartItem);
 router.delete("/cart/:userId", orderController.deleteCart);
 
 module.exports = router;
-
-// old
-// router.get('/getOrder/:id', orderController.getOrder);
-// router.get('/getOrders/:user_id', orderController.getOrders);
-// router.delete('/deleteOrder/:id', orderController.deleteOrder);
-// router.post('/createOrder', orderController.createOrder);
-// router.post('/updateOrder', orderController.updateOrder);
-// router.get('/getCart/:id', orderController.getCart);
-// router.delete('/deleteCart/:id', orderController.deleteCart);
-// router.post('/createCart', orderController.createCart);
-// router.post('/updateCart', orderController.updateCart);
