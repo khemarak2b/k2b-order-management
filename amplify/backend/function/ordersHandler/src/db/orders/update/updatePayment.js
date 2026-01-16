@@ -1,6 +1,6 @@
 const updatePayment = async (pool, data) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || 'dev';
+  const schema = process.env.ENVIRONMENT || "dev";
 
   try {
     const { id, ...fields } = data;
@@ -8,10 +8,10 @@ const updatePayment = async (pool, data) => {
     const values = Object.values(fields);
 
     if (columns.length === 0) {
-      throw new Error('No fields to update');
+      throw new Error("No fields to update");
     }
 
-    const setClause = columns.map((col, i) => `${col} = $${i + 1}`).join(', ');
+    const setClause = columns.map((col, i) => `${col} = $${i + 1}`).join(", ");
 
     const query = `
       UPDATE ${schema}.payments

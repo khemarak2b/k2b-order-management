@@ -3,5 +3,5 @@ module.exports = {
   getOrders: require("./getOrders"),
   getCart: require("./getCart"),
   getPayment: require("./getPayment"),
-  getPayments: require("./getPayments")
+  getPayments: require("./getPayments"),
 };

@@ -91,7 +91,7 @@ exports.deleteCart = async (req, res) => {
     }
 
     const deleted = await orderDb.deleteCart(req.pool, userId);
-    
+
     if (!deleted) {
       return res.status(404).json({ error: "Cart not found" });
     }
@@ -106,18 +106,18 @@ exports.deleteCart = async (req, res) => {
 exports.createOrder = async (req, res) => {
   try {
     console.log("[createOrder] Request body:", JSON.stringify(req.body));
-    const { 
-      userId, 
-      subtotal, 
-      taxAmount = 0, 
-      shippingCost = 0, 
-      discountAmount = 0, 
-      totalAmount, 
-      currencyCode = 'AUD',
+    const {
+      userId,
+      subtotal,
+      taxAmount = 0,
+      shippingCost = 0,
+      discountAmount = 0,
+      totalAmount,
+      currencyCode = "AUD",
       notes,
       shippingAddress,
       billingAddress,
-      orderItems
+      orderItems,
     } = req.body;
 
     // Validation
@@ -137,7 +137,7 @@ exports.createOrder = async (req, res) => {
     const order = {
       user_id: userId,
       order_number: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      status: 'pending',
+      status: "pending",
       subtotal: subtotal || totalAmount,
       tax_amount: taxAmount,
       shipping_cost: shippingCost,
@@ -147,20 +147,20 @@ exports.createOrder = async (req, res) => {
       notes: notes || null,
       shipping_address: shippingAddress,
       billing_address: billingAddress || shippingAddress,
-      order_items: Array.isArray(orderItems) ? orderItems.map(item => toSnakeCase(item)) : []
+      order_items: Array.isArray(orderItems) ? orderItems.map((item) => toSnakeCase(item)) : [],
     };
 
     console.log("[createOrder] Creating Order with data:", JSON.stringify(order));
     const result = await orderDb.createOrder(req.pool, order);
     console.log("[createOrder] Order created successfully:", JSON.stringify(result));
-    
+
     // Clear user's cart after order creation (ignore errors if cart doesn't exist)
     try {
       await orderDb.deleteCart(req.pool, userId);
     } catch (err) {
       console.warn("[createOrder] Failed to clear cart:", err.message);
     }
-    
+
     res.status(201).json(formatResponse(result));
   } catch (error) {
     console.error("[createOrder] Error:", error.message, error.stack);
@@ -180,7 +180,7 @@ exports.createCart = async (req, res) => {
 
     const dbData = {
       cart: toSnakeCase({ user_id: userId }),
-      cart_items: Array.isArray(cart_items) ? cart_items.map(item => toSnakeCase(item)) : []
+      cart_items: Array.isArray(cart_items) ? cart_items.map((item) => toSnakeCase(item)) : [],
     };
 
     console.log("[createCart] Creating cart with data:", JSON.stringify(dbData));
@@ -204,9 +204,9 @@ exports.updateOrder = async (req, res) => {
     }
 
     // Validate status transition
-    const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'];
+    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled", "refunded"];
     if (status && !validStatuses.includes(status)) {
-      return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+      return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
     }
 
     // Get current order to validate transition
@@ -217,17 +217,17 @@ exports.updateOrder = async (req, res) => {
       }
 
       const validTransitions = {
-        'pending': ['processing', 'cancelled'],
-        'processing': ['shipped', 'cancelled'],
-        'shipped': ['delivered'],
-        'delivered': ['refunded'],
-        'cancelled': [],
-        'refunded': []
+        pending: ["processing", "cancelled"],
+        processing: ["shipped", "cancelled"],
+        shipped: ["delivered"],
+        delivered: ["refunded"],
+        cancelled: [],
+        refunded: [],
       };
 
       if (!validTransitions[currentOrder.status]?.includes(status)) {
-        return res.status(400).json({ 
-          error: `Cannot transition from ${currentOrder.status} to ${status}` 
+        return res.status(400).json({
+          error: `Cannot transition from ${currentOrder.status} to ${status}`,
         });
       }
     }
@@ -345,8 +345,8 @@ exports.createPayment = async (req, res) => {
       order_id: orderId,
       payment_method: paymentMethod,
       amount: amount,
-      status: 'pending',
-      payment_details: paymentDetails || null
+      status: "pending",
+      payment_details: paymentDetails || null,
     });
     console.log("[createPayment] Payment created successfully:", JSON.stringify(payment));
     res.status(201).json(formatResponse(payment));
@@ -404,10 +404,10 @@ exports.updatePayment = async (req, res) => {
     }
 
     // Validate payment status
-    const validStatuses = ['pending', 'completed', 'failed', 'refunded'];
+    const validStatuses = ["pending", "completed", "failed", "refunded"];
     if (status && !validStatuses.includes(status)) {
-      return res.status(400).json({ 
-        error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` 
+      return res.status(400).json({
+        error: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
       });
     }
 
@@ -423,8 +423,8 @@ exports.updatePayment = async (req, res) => {
     console.log("[updatePayment] Payment updated successfully:", JSON.stringify(updatedPayment));
 
     // If payment is completed, update order status to processing
-    if (status === 'completed' && payment.status !== 'completed') {
-      await orderDb.updateOrder(req.pool, { id: orderId, status: 'processing' });
+    if (status === "completed" && payment.status !== "completed") {
+      await orderDb.updateOrder(req.pool, { id: orderId, status: "processing" });
     }
 
     res.json(formatResponse(updatedPayment));
