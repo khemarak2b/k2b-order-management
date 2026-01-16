@@ -9,6 +9,14 @@
           ],
           "category": "function",
           "resourceName": "ordersHandler"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "cartHandler"
         }
       ],
       "providerPlugin": "awscloudformation",
@@ -25,6 +33,20 @@
     }
   },
   "function": {
+    "cartHandler": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "k2bordermanagementlayer"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "k2bordermanagementlayer": {
       "build": true,
       "providerPlugin": "awscloudformation",
@@ -131,6 +153,22 @@
         {
           "category": "auth",
           "resourceName": "k2bordermanagement3df18ae1"
+        }
+      ]
+    },
+    "AMPLIFY_function_cartHandler_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "cartHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_cartHandler_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "cartHandler"
         }
       ]
     },

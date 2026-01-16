@@ -15,12 +15,4 @@ router.get("/:orderId/payments", orderController.getPayments);
 router.get("/:orderId/payments/:paymentId", orderController.getPayment);
 router.put("/:orderId/payments/:paymentId", orderController.updatePayment);
 
-// Cart endpoints
-router.get("/cart/:userId", orderController.getCart);
-router.post("/cart", orderController.createCart);
-router.post("/cart/:userId/items", orderController.addCartItem);
-router.put("/cart/:userId/items/:itemId", orderController.updateCartItem);
-router.delete("/cart/:userId/items/:itemId", orderController.deleteCartItem);
-router.delete("/cart/:userId", orderController.deleteCart);
-
 module.exports = router;

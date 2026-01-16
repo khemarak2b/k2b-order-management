@@ -13,6 +13,19 @@
           "delete"
         ]
       }
+    },
+    "/cart": {
+      "name": "/cart",
+      "lambdaFunction": "cartHandler",
+      "permissions": {
+        "setting": "private",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
     }
   }
 }
