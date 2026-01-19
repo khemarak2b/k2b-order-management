@@ -22,7 +22,34 @@ const createOrder = async (pool, data) => {
     // Insert order items if provided
     let orderItemsResult = [];
     if (order_items && order_items.length > 0) {
-      const columnsOrderItems = Object.keys(order_items[0]);
+      // Validate and enrich order items with current prices from database
+      const enrichedItems = [];
+      
+      for (const item of order_items) {
+        // Get current product variant price from database
+        const priceQuery = `
+          SELECT price FROM ${schema}.product_variants 
+          WHERE id = $1
+        `;
+        const priceResult = await client.query(priceQuery, [item.variant_id]);
+        
+        if (priceResult.rows.length === 0) {
+          throw new Error(`Product variant ${item.variant_id} not found`);
+        }
+        
+        const currentPrice = parseFloat(priceResult.rows[0].price);
+        const quantity = parseInt(item.quantity, 10);
+        const lineTotal = currentPrice * quantity;
+        
+        // Use current price from database (not frontend price)
+        enrichedItems.push({
+          ...item,
+          price: currentPrice,
+          line_total: lineTotal,
+        });
+      }
+
+      const columnsOrderItems = Object.keys(enrichedItems[0]);
 
       // Ensure order_id is included in the items
       if (!columnsOrderItems.includes("order_id")) {
@@ -30,7 +57,7 @@ const createOrder = async (pool, data) => {
       }
 
       const valuesOrderItems = [];
-      const placeholdersItems = order_items
+      const placeholdersItems = enrichedItems
         .map((item) => {
           const rowPlaceholders = columnsOrderItems.map((col) => {
             let value;

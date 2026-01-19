@@ -8,6 +8,7 @@
     "express": "^5.2.1",
     "lodash": "^4.17.21",
     "pg": "^8.11.0",
-    "serverless-http": "^4.0.0"
+    "serverless-http": "^4.0.0",
+    "snowflake-id": "^1.0.1"
   }
 }

@@ -1,6 +1,7 @@
 const orderDb = require("../db/orders");
 const { formatResponse } = require("../utils/responseFormatter");
 const { toSnakeCase } = require("../utils/caseConverter");
+const { generateFormattedOrderId } = require("../utils/idGenerator");
 
 exports.getOrder = async (req, res) => {
   try {
@@ -94,7 +95,7 @@ exports.createOrder = async (req, res) => {
 
     const order = {
       user_id: userId,
-      order_number: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      order_number: generateFormattedOrderId(),
       status: "pending",
       subtotal: subtotal || totalAmount,
       tax_amount: taxAmount,
@@ -190,7 +191,10 @@ exports.createPayment = async (req, res) => {
     if (!paymentMethod) {
       return res.status(400).json({ error: "Payment method is required" });
     }
-    if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+    
+    const parsedAmount = parseFloat(amount);
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
+      console.error("[createPayment] Invalid amount:", { amount, parsedAmount, type: typeof amount });
       return res.status(400).json({ error: "Amount must be a positive number" });
     }
 
@@ -203,7 +207,7 @@ exports.createPayment = async (req, res) => {
     const payment = await orderDb.createPayment(req.pool, {
       order_id: orderId,
       payment_method: paymentMethod,
-      amount: amount,
+      amount: parsedAmount,
       status: "pending",
       payment_details: paymentDetails || null,
     });
@@ -281,9 +285,18 @@ exports.updatePayment = async (req, res) => {
     const updatedPayment = await orderDb.updatePayment(req.pool, dbData);
     console.log("[updatePayment] Payment updated successfully:", JSON.stringify(updatedPayment));
 
-    // If payment is completed, update order status to processing
+    // If payment is completed, update order status to processing and send SQS notification
     if (status === "completed" && payment.status !== "completed") {
       await orderDb.updateOrder(req.pool, { id: orderId, status: "processing" });
+      
+      // Send SQS notification to notification service
+      try {
+        const order = await orderDb.getOrder(req.pool, orderId);
+        await sendOrderNotification(order, updatedPayment);
+      } catch (err) {
+        console.warn("[updatePayment] Failed to send SQS notification:", err.message);
+        // Don't fail the request if SQS notification fails
+      }
     }
 
     res.json(formatResponse(updatedPayment));
@@ -292,3 +305,52 @@ exports.updatePayment = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+/**
+ * Send order placement notification to SQS
+ */
+async function sendOrderNotification(order, payment) {
+  const AWS = require("aws-sdk");
+  const sqs = new AWS.SQS();
+  
+  const sqsQueueUrl = process.env.SQS_QUEUE_URL || process.env.NOTIFICATION_QUEUE_URL;
+  if (!sqsQueueUrl) {
+    throw new Error("SQS_QUEUE_URL environment variable is not set");
+  }
+
+  const message = {
+    eventType: "ORDER_PLACED",
+    orderId: order.id,
+    orderNumber: order.order_number,
+    userId: order.user_id,
+    totalAmount: order.total_amount,
+    paymentMethod: payment.payment_method,
+    paymentStatus: payment.status,
+    subtotal: order.subtotal,
+    taxAmount: order.tax_amount,
+    shippingCost: order.shipping_cost,
+    discountAmount: order.discount_amount,
+    currencyCode: order.currency_code,
+    shippingAddress: order.shipping_address,
+    billingAddress: order.billing_address,
+    notes: order.notes,
+    createdAt: order.created_at,
+    updatedAt: order.updated_at,
+  };
+
+  console.log("[sendOrderNotification] Sending message to SQS:", JSON.stringify(message));
+
+  const params = {
+    QueueUrl: sqsQueueUrl,
+    MessageBody: JSON.stringify(message),
+    MessageAttributes: {
+      eventType: {
+        StringValue: "ORDER_PLACED",
+        DataType: "String",
+      },
+    },
+  };
+
+  await sqs.sendMessage(params).promise();
+  console.log("[sendOrderNotification] Message sent successfully to SQS");
+}
