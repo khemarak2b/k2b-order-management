@@ -1,6 +1,6 @@
 const cartDb = require("../db/cart");
-const { formatResponse } = require("../utils/responseFormatter");
-const { toSnakeCase } = require("../utils/caseConverter");
+const { formatResponse } = require("/opt/nodejs/responseFormatter");
+const { toSnakeCase } = require("/opt/nodejs/caseConverter");
 
 exports.getCart = async (req, res) => {
   try {

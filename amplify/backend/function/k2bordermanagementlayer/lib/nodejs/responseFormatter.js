@@ -9,6 +9,10 @@ const convertToCamelCase = (data) => {
     return data.map((item) => convertToCamelCase(item));
   }
 
+  if (data instanceof Date) {
+    return data.toISOString();
+  }
+
   if (data !== null && typeof data === "object") {
     const camelCased = {};
     for (const [key, value] of Object.entries(data)) {

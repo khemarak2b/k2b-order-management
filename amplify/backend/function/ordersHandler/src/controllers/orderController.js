@@ -1,6 +1,6 @@
 const orderDb = require("../db/orders");
-const { formatResponse } = require("../utils/responseFormatter");
-const { toSnakeCase } = require("../utils/caseConverter");
+const { formatResponse } = require("/opt/nodejs/responseFormatter");
+const { toSnakeCase } = require("/opt/nodejs/caseConverter");
 const { generateFormattedOrderId } = require("../utils/idGenerator");
 const { sendNotification } = require("../utils/notificationService");
 
