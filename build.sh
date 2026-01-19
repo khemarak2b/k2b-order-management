@@ -58,6 +58,14 @@ ls -al amplify/ || echo "amplify/ directory not found"
 echo "Setting up IDP configuration..."
 bash scripts/setup-idp-config.sh "$DEPLOYMENT_ENV" "$BUCKET_NAME" "$APPLICATION_NAME" "$DEPLOYMENT_REGION"
 
+# Setup other endpoints
+K2B_NOTIFICATION_MANAGEMENT="k2b-notification-management"
+
+aws s3api get-object --bucket $BUCKET_NAME \
+--key "${DEPLOYMENT_ENV}/${K2B_NOTIFICATION_MANAGEMENT}/${K2B_NOTIFICATION_MANAGEMENT}-aws-exports.js" "${K2B_NOTIFICATION_MANAGEMENT}-aws-exports.js"
+cp "${K2B_NOTIFICATION_MANAGEMENT}-aws-exports.js" ./amplify/backend/function/ordersHandler/src
+
+
 # Try to download team-provider-info.json from S3
 echo "Attempting to download team-provider-info.json from S3..."
 if aws s3 ls "s3://${BUCKET_NAME}/${DEPLOYMENT_ENV}/${APPLICATION_NAME}/" 2>/dev/null; then
