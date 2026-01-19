@@ -1,26 +1,18 @@
-const Snowflake = require('snowflake-id');
-
-// Initialize Snowflake ID generator
-// Epoch: Jan 1, 2020, Worker ID: 1, Datacenter ID: 1
-const snowflake = new Snowflake({
-  epoch: 1577836800000, // Jan 1, 2020 in milliseconds
-  workerId: 1,
-  datacenterId: 1,
-});
+const { nanoid } = require('nanoid');
 
 /**
- * Generate a Snowflake ID for orders
- * @returns {string} Snowflake ID as string
+ * Generate a Nano ID for orders
+ * @returns {string} Nano ID as string
  */
 exports.generateOrderId = () => {
-  return snowflake.generate().toString();
+  return nanoid();
 };
 
 /**
- * Generate a formatted order ID (e.g., "ORD-1234567890123456789")
+ * Generate a formatted order ID (e.g., "ORD-abc123xyz...")
  * @returns {string} Formatted order ID
  */
 exports.generateFormattedOrderId = () => {
-  const id = snowflake.generate().toString();
+  const id = nanoid(10);
   return `ORD-${id}`;
 };
