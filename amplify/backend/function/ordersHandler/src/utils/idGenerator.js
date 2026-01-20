@@ -1,7 +1,6 @@
-import crypto from "crypto";
-
+const crypto = require("crypto");
 /**
- * Generate a formatted order ID (e.g., "ORD-abc123xyz...")
+ * Generate a formatted order ID
  * @returns {string} Formatted order ID
  */
 exports.generateFormattedOrderId = () => {
