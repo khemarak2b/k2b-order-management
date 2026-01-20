@@ -1,18 +1,13 @@
-const { nanoid } = require('nanoid');
-
-/**
- * Generate a Nano ID for orders
- * @returns {string} Nano ID as string
- */
-exports.generateOrderId = () => {
-  return nanoid();
-};
+import crypto from "crypto";
 
 /**
  * Generate a formatted order ID (e.g., "ORD-abc123xyz...")
  * @returns {string} Formatted order ID
  */
 exports.generateFormattedOrderId = () => {
-  const id = nanoid(10);
-  return `ORD-${id}`;
+  const timestamp = Date.now().toString().slice(-6); // last 6 digits
+  const random1 = crypto.randomInt(1000, 10000);
+  const random2 = crypto.randomInt(1000, 10000);
+
+  return `${random1}-${timestamp}-${random2}`;
 };
