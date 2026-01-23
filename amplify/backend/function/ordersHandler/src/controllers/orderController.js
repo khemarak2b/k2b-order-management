@@ -114,6 +114,14 @@ exports.createOrder = async (req, res) => {
     const result = await orderDb.createOrder(req.pool, order);
     console.log("[createOrder] Order created successfully:", JSON.stringify(result));
 
+    // Send order confirmation email
+    try {
+      await sendOrderCreatedNotification(result, req.pool);
+    } catch (err) {
+      console.warn("[createOrder] Failed to send notification:", err.message);
+      // Don't fail the request if notification fails
+    }
+
     // Clear user's cart after order creation (ignore errors if cart doesn't exist)
     try {
       await orderDb.deleteCart(req.pool, userId);
@@ -308,13 +316,57 @@ exports.updatePayment = async (req, res) => {
 };
 
 /**
+ * Send order created notification using notification service
+ */
+async function sendOrderCreatedNotification(orderResults, pool) {
+  const { order } = orderResults;
+
+  // Fetch user email from users table
+  const client = await pool.connect();
+  try {
+    const schema = process.env.ENVIRONMENT || "dev";
+    const result = await client.query(`SELECT email FROM ${schema}.users WHERE id = $1`, [order.user_id]);
+
+    if (result.rows.length === 0) {
+      throw new Error(`User not found for order ${order.id}`);
+    }
+
+    const user = result.rows[0];
+
+    await sendNotification({
+      to: user.email,
+      subject: `Order Received #${order.order_number}`,
+      template: "order-received",
+      data: {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        userId: order.user_id,
+        totalAmount: order.total_amount,
+        subtotal: order.subtotal,
+        taxAmount: order.tax_amount,
+        shippingCost: order.shipping_cost,
+        discountAmount: order.discount_amount,
+        currencyCode: order.currency_code,
+        shippingAddress: order.shipping_address,
+        billingAddress: order.billing_address,
+        notes: order.notes,
+        createdAt: order.created_at,
+        updatedAt: order.updated_at,
+      },
+    });
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Send order placement notification using notification service
  */
 async function sendOrderNotification(order, payment) {
   await sendNotification({
     to: order.email,
-    subject: `Order Confirmation #${order.order_number}`,
-    template: "order-placed",
+    subject: `Payment Received #${order.order_number}`,
+    template: "payment-received",
     data: {
       orderId: order.id,
       orderNumber: order.order_number,
