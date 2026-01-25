@@ -1,8 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const serverless = require("serverless-http");
-const { getDbPool } = require("/opt/nodejs/db");
+const { getDbPool } = require("/opt/nodejs/database/db");
 const cartRoutes = require("./routes/cart");
+const { extractAndInjectCognitoAuth } = require("/opt/nodejs/utils/cognitoExtractor");
 
 let pool = null; // Module-level pool, reused across Lambda invocations
 
@@ -48,11 +49,32 @@ app.use(async (req, res, next) => {
   next();
 });
 
+// Attach Lambda event context for auth middleware
+app.use((req, res, next) => {
+  const cognitoAuth = req.get("x-cognito-authentication-provider");
+  if (cognitoAuth) {
+    req.cognitoAuthProvider = cognitoAuth;
+  }
+  next();
+});
+
 app.use("/cart", cartRoutes);
 
 const handler = serverless(app);
 
 exports.handler = async (event, context) => {
-  console.log("[Lambda Event]", JSON.stringify(event));
-  return handler(event, context);
+  const requestId = context.awsRequestId;
+
+  console.log(`[${requestId}] Lambda event:`, JSON.stringify(event, null, 2));
+
+  try {
+    // Extract and inject Cognito auth info
+    extractAndInjectCognitoAuth(event, requestId);
+
+    const response = await handler(event, context);
+    return response;
+  } catch (error) {
+    console.error(`[${requestId}] Handler error:`, error);
+    throw error;
+  }
 };

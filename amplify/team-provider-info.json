@@ -16,7 +16,7 @@
       "function": {
         "ordersHandler": {
           "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
-          "s3Key": "amplify-builds/ordersHandler-54734a31704d47687854-build.zip"
+          "s3Key": "amplify-builds/ordersHandler-79384c336a546670614b-build.zip"
         },
         "k2bordermanagementlayer": {
           "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
@@ -24,8 +24,9 @@
         },
         "cartHandler": {
           "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
-          "s3Key": "amplify-builds/cartHandler-3054383036792b577953-build.zip"
-        }
+          "s3Key": "amplify-builds/cartHandler-4c70446c795835303057-build.zip"
+        },
+        "adminOrdersHandler": {}
       },
       "auth": {
         "k2bordermanagement3df18ae1": {

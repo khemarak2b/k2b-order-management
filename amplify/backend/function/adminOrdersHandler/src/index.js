@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const serverless = require("serverless-http");
 const { getDbPool } = require("/opt/nodejs/database/db");
-const orderRoutes = require("./routes/orders");
+const adminOrderRoutes = require("./routes/adminOrders");
 const { extractAndInjectCognitoAuth } = require("/opt/nodejs/utils/cognitoExtractor");
 
 let pool = null; // Module-level pool, reused across Lambda invocations
@@ -17,11 +17,6 @@ const getPool = async () => {
 const app = express();
 
 const ALLOWED_ORIGINS = new Set([
-  "http://localhost:3008",
-  "https://dkuruf9x2pu8c.cloudfront.net",
-  "https://dev-app.k2b.com.au",
-  "https://app.k2b.com.au",
-  // admin app
   "http://localhost:3009",
   "https://dev-admin.k2b.com.au",
   "https://admin.k2b.com.au",
@@ -51,8 +46,6 @@ app.use(async (req, res, next) => {
 
 // Attach Lambda event context for auth middleware
 app.use((req, res, next) => {
-  // serverless-http doesn't directly expose event, so we extract Cognito info from headers
-  // API Gateway passes Cognito info in custom headers
   const cognitoAuth = req.get("x-cognito-authentication-provider");
   if (cognitoAuth) {
     req.cognitoAuthProvider = cognitoAuth;
@@ -60,8 +53,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// User routes (regular Cognito user pool)
-app.use("/orders", orderRoutes);
+app.use("/admin-orders", adminOrderRoutes);
 
 const handler = serverless(app);
 

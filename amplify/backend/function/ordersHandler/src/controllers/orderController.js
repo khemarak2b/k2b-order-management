@@ -1,6 +1,6 @@
 const orderDb = require("../db/orders");
-const { formatResponse } = require("/opt/nodejs/responseFormatter");
-const { toSnakeCase } = require("/opt/nodejs/caseConverter");
+const { formatResponse } = require("/opt/nodejs/utils/responseFormatter");
+const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { generateFormattedOrderId } = require("../utils/idGenerator");
 const { sendNotification } = require("../utils/notificationService");
 
@@ -78,7 +78,11 @@ exports.createOrder = async (req, res) => {
       shippingAddress,
       billingAddress,
       orderItems,
+      items,
     } = req.body;
+
+    // Support both 'orderItems' and 'items' field names
+    const finalOrderItems = orderItems || items;
 
     // Validation
     if (!userId) {
@@ -107,7 +111,7 @@ exports.createOrder = async (req, res) => {
       notes: notes || null,
       shipping_address: shippingAddress,
       billing_address: billingAddress || shippingAddress,
-      order_items: Array.isArray(orderItems) ? orderItems.map((item) => toSnakeCase(item)) : [],
+      order_items: Array.isArray(finalOrderItems) ? finalOrderItems.map((item) => toSnakeCase(item)) : [],
     };
 
     console.log("[createOrder] Creating Order with data:", JSON.stringify(order));

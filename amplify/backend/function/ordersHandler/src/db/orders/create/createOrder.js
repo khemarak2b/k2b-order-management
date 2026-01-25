@@ -4,6 +4,10 @@ const createOrder = async (pool, data) => {
 
   try {
     const { order_items, ...orderData } = data;
+    console.log("[createOrder] Received order_items:", JSON.stringify(order_items));
+    console.log("[createOrder] order_items is array:", Array.isArray(order_items));
+    console.log("[createOrder] order_items length:", order_items?.length);
+    
     const orderColumns = Object.keys(orderData);
     const orderValues = Object.values(orderData);
     const placeholders = orderColumns.map((_, i) => `$${i + 1}`).join(", ");
@@ -26,12 +30,14 @@ const createOrder = async (pool, data) => {
       const enrichedItems = [];
       
       for (const item of order_items) {
+        console.log("[createOrder] Processing item:", JSON.stringify(item));
         // Get current product variant price from database
         const priceQuery = `
           SELECT price FROM ${schema}.product_variants 
           WHERE id = $1
         `;
-        const priceResult = await client.query(priceQuery, [item.variant_id]);
+        console.log("[createOrder] Looking up variant_id:", item.variant_id || item.variantId);
+        const priceResult = await client.query(priceQuery, [item.variant_id || item.variantId]);
         
         if (priceResult.rows.length === 0) {
           throw new Error(`Product variant ${item.variant_id} not found`);

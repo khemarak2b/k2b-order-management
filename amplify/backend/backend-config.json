@@ -17,6 +17,14 @@
           ],
           "category": "function",
           "resourceName": "cartHandler"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "adminOrdersHandler"
         }
       ],
       "providerPlugin": "awscloudformation",
@@ -33,6 +41,20 @@
     }
   },
   "function": {
+    "adminOrdersHandler": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "k2bordermanagementlayer"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "cartHandler": {
       "build": true,
       "dependsOn": [

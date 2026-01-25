@@ -26,6 +26,19 @@
           "delete"
         ]
       }
+    },
+    "/admin-orders": {
+      "name": "/admin-orders",
+      "lambdaFunction": "adminOrdersHandler",
+      "permissions": {
+        "setting": "private",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
     }
   }
 }
