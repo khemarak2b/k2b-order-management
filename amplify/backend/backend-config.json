@@ -178,6 +178,22 @@
         }
       ]
     },
+    "AMPLIFY_function_adminOrdersHandler_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "adminOrdersHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_adminOrdersHandler_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "adminOrdersHandler"
+        }
+      ]
+    },
     "AMPLIFY_function_cartHandler_deploymentBucketName": {
       "usedBy": [
         {

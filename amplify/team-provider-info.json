@@ -16,17 +16,20 @@
       "function": {
         "ordersHandler": {
           "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
-          "s3Key": "amplify-builds/ordersHandler-79384c336a546670614b-build.zip"
+          "s3Key": "amplify-builds/ordersHandler-67426b695361306d7867-build.zip"
         },
         "k2bordermanagementlayer": {
           "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
-          "s3Key": "amplify-builds/k2bordermanagementlayer-LambdaLayerVersion7588722a-build.zip"
+          "s3Key": "amplify-builds/k2bordermanagementlayer-LambdaLayerVersion898a1790-build.zip"
         },
         "cartHandler": {
           "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
-          "s3Key": "amplify-builds/cartHandler-4c70446c795835303057-build.zip"
+          "s3Key": "amplify-builds/cartHandler-32633956566637574536-build.zip"
         },
-        "adminOrdersHandler": {}
+        "adminOrdersHandler": {
+          "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
+          "s3Key": "amplify-builds/adminOrdersHandler-466674343968616b3276-build.zip"
+        }
       },
       "auth": {
         "k2bordermanagement3df18ae1": {
