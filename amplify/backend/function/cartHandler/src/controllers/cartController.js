@@ -47,7 +47,7 @@ exports.deleteCart = async (req, res) => {
 exports.createCart = async (req, res) => {
   try {
     console.log("[createCart] Request body:", JSON.stringify(req.body));
-    const { cart, cart_items } = req.body;
+    const { cart, cartItems } = req.body;
     const { userId } = cart || {};
 
     if (!userId) {
@@ -56,7 +56,7 @@ exports.createCart = async (req, res) => {
 
     const dbData = {
       cart: toSnakeCase({ user_id: userId }),
-      cart_items: Array.isArray(cart_items) ? cart_items.map((item) => toSnakeCase(item)) : [],
+      cart_items: Array.isArray(cartItems) ? cartItems.map((item) => toSnakeCase(item)) : [],
     };
 
     console.log("[createCart] Creating cart with data:", JSON.stringify(dbData));
