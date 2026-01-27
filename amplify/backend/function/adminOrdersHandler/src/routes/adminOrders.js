@@ -47,6 +47,7 @@ const requirePaymentOrderOwnershipOrAdmin = createRoleAwareOwnershipMiddleware(
 const requireUserIdMatchOrAdminMiddleware = requireUserIdMatchOrAdmin((req) => req.params.userId);
 
 // Orders endpoints - admin can access any user's orders
+router.get("/", orderController.getAllOrders);
 router.get("/user/:userId", requireUserIdMatchOrAdminMiddleware, orderController.getOrders);
 router.put("/:id", requireOrderOwnershipOrAdmin, orderController.updateOrder);
 router.delete("/:id", requireOrderOwnershipOrAdmin, orderController.deleteOrder);

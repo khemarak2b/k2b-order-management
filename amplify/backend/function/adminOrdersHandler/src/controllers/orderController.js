@@ -40,6 +40,102 @@ exports.getOrders = async (req, res) => {
   }
 };
 
+exports.getAllOrders = async (req, res) => {
+  try {
+    const {
+      status,
+      userId,
+      minAmount,
+      maxAmount,
+      paymentStatus,
+      createdAfter,
+      createdBefore,
+      updatedAfter,
+      updatedBefore,
+      orderNumber,
+      limit = 20,
+      offset = 0,
+    } = req.query;
+
+    // Validate status if provided
+    if (status) {
+      const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled", "refunded"];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
+      }
+    }
+
+    // Validate payment status if provided
+    if (paymentStatus) {
+      const validPaymentStatuses = ["pending", "completed", "failed", "refunded"];
+      if (!validPaymentStatuses.includes(paymentStatus)) {
+        return res.status(400).json({
+          error: `Invalid payment status. Must be one of: ${validPaymentStatuses.join(", ")}`,
+        });
+      }
+    }
+
+    // Validate pagination parameters
+    const parsedLimit = parseInt(limit, 10);
+    const parsedOffset = parseInt(offset, 10);
+
+    if (isNaN(parsedLimit) || parsedLimit < 1 || parsedLimit > 1000) {
+      return res.status(400).json({ error: "Limit must be between 1 and 1000" });
+    }
+
+    if (isNaN(parsedOffset) || parsedOffset < 0) {
+      return res.status(400).json({ error: "Offset must be a non-negative integer" });
+    }
+
+    // Validate amount filters
+    const parsedMinAmount = minAmount !== undefined ? parseFloat(minAmount) : undefined;
+    const parsedMaxAmount = maxAmount !== undefined ? parseFloat(maxAmount) : undefined;
+
+    if (minAmount !== undefined && (isNaN(parsedMinAmount) || parsedMinAmount < 0)) {
+      return res.status(400).json({ error: "minAmount must be a non-negative number" });
+    }
+
+    if (maxAmount !== undefined && (isNaN(parsedMaxAmount) || parsedMaxAmount < 0)) {
+      return res.status(400).json({ error: "maxAmount must be a non-negative number" });
+    }
+
+    // Build filters object
+    const filters = {
+      status,
+      userId,
+      minAmount: parsedMinAmount,
+      maxAmount: parsedMaxAmount,
+      paymentStatus,
+      createdAfter,
+      createdBefore,
+      updatedAfter,
+      updatedBefore,
+      orderNumber,
+    };
+
+    const result = await orderDb.getAllOrders(req.pool, filters, parsedLimit, parsedOffset);
+
+    const page = Math.floor(result.offset / result.limit);
+    const hasMore = result.offset + result.limit < result.total;
+
+    res.json(
+      formatResponse({
+        data: result.orders,
+        pagination: {
+          total: result.total,
+          page,
+          pageSize: result.limit,
+          offset: result.offset,
+          hasMore,
+        },
+      })
+    );
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 exports.deleteOrder = async (req, res) => {
   try {
     const { id } = req.params;
