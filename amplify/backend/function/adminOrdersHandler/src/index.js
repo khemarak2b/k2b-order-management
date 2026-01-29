@@ -16,11 +16,7 @@ const getPool = async () => {
 
 const app = express();
 
-const ALLOWED_ORIGINS = new Set([
-  "http://localhost:3009",
-  "https://dev-admin.k2b.com.au",
-  "https://admin.k2b.com.au",
-]);
+const ALLOWED_ORIGINS = new Set(["http://localhost:3009", "https://dev-admin.k2b.com.au", "https://admin.k2b.com.au"]);
 
 const corsOptions = {
   origin: (origin, callback) => {
@@ -32,7 +28,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token", "custom-token"],
+  allowedHeaders: ["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", "X-Amz-Security-Token"],
 };
 
 app.use(cors(corsOptions));
