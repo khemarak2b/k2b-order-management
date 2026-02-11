@@ -1,4 +1,4 @@
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
 const chromium = require("@sparticuz/chromium");
 const { generateInvoiceHTML } = require("../templates/invoiceTemplate");
 
