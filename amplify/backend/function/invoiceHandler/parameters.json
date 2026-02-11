@@ -1,0 +1,5 @@
+{
+  "invoiceBucketName": {
+    "Fn::GetAtt": ["customInvoiceBucket", "Outputs.BucketName"]
+  }
+}

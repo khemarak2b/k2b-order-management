@@ -25,6 +25,14 @@
           ],
           "category": "function",
           "resourceName": "adminOrdersHandler"
+        },
+        {
+          "attributes": [
+            "Name",
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "invoiceHandler"
         }
       ],
       "providerPlugin": "awscloudformation",
@@ -38,6 +46,13 @@
       "providerPlugin": "awscloudformation",
       "service": "Cognito",
       "serviceType": "imported"
+    }
+  },
+  "custom": {
+    "InvoiceBucket": {
+      "dependsOn": [],
+      "providerPlugin": "awscloudformation",
+      "service": "customCloudformation"
     }
   },
   "function": {
@@ -69,7 +84,33 @@
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     },
+    "invoiceHandler": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "k2bordermanagementlayer"
+        },
+        {
+          "attributes": [
+            "Arn"
+          ],
+          "category": "function",
+          "resourceName": "k2bordermanagementlayer2"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
+    },
     "k2bordermanagementlayer": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "LambdaLayer"
+    },
+    "k2bordermanagementlayer2": {
       "build": true,
       "providerPlugin": "awscloudformation",
       "service": "LambdaLayer"
@@ -207,6 +248,38 @@
         {
           "category": "function",
           "resourceName": "cartHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_invoiceHandler_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "invoiceHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_invoiceHandler_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "invoiceHandler"
+        }
+      ]
+    },
+    "AMPLIFY_function_k2bordermanagementlayer2_deploymentBucketName": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "k2bordermanagementlayer2"
+        }
+      ]
+    },
+    "AMPLIFY_function_k2bordermanagementlayer2_s3Key": {
+      "usedBy": [
+        {
+          "category": "function",
+          "resourceName": "k2bordermanagementlayer2"
         }
       ]
     },

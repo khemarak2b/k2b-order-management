@@ -1,19 +1,6 @@
 {
   "version": 1,
   "paths": {
-    "/orders": {
-      "name": "/orders",
-      "lambdaFunction": "ordersHandler",
-      "permissions": {
-        "setting": "private",
-        "auth": [
-          "create",
-          "read",
-          "update",
-          "delete"
-        ]
-      }
-    },
     "/cart": {
       "name": "/cart",
       "lambdaFunction": "cartHandler",
@@ -27,9 +14,48 @@
         ]
       }
     },
+    "/orders": {
+      "name": "/orders",
+      "lambdaFunction": "ordersHandler",
+      "permissions": {
+        "setting": "private",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
+    },
     "/admin-orders": {
       "name": "/admin-orders",
       "lambdaFunction": "adminOrdersHandler",
+      "permissions": {
+        "setting": "private",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
+    },
+    "/invoices": {
+      "name": "/invoices",
+      "lambdaFunction": "invoiceHandler",
+      "permissions": {
+        "setting": "private",
+        "auth": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
+    },
+    "/admin-invoices": {
+      "name": "/admin-invoices",
+      "lambdaFunction": "invoiceHandler",
       "permissions": {
         "setting": "private",
         "auth": [

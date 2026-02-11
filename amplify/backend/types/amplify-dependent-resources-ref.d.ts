@@ -6,6 +6,12 @@ export type AmplifyDependentResourcesAttributes = {
       "RootUrl": "string"
     }
   },
+  "custom": {
+    "InvoiceBucket": {
+      "BucketArn": "string",
+      "BucketName": "string"
+    }
+  },
   "function": {
     "adminOrdersHandler": {
       "Arn": "string",
@@ -21,7 +27,17 @@ export type AmplifyDependentResourcesAttributes = {
       "Name": "string",
       "Region": "string"
     },
+    "invoiceHandler": {
+      "Arn": "string",
+      "LambdaExecutionRole": "string",
+      "LambdaExecutionRoleArn": "string",
+      "Name": "string",
+      "Region": "string"
+    },
     "k2bordermanagementlayer": {
+      "Arn": "string"
+    },
+    "k2bordermanagementlayer2": {
       "Arn": "string"
     },
     "ordersHandler": {

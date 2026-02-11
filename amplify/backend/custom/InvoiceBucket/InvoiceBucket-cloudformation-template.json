@@ -1,0 +1,68 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "{\"createdOn\":\"Windows\",\"createdBy\":\"Amplify\",\"createdWith\":\"12.14.4\",\"stackType\":\"custom-customCloudformation\",\"metadata\":{\"whyContinueWithGen1\":\"Prefer not to answer\"}}",
+  "Parameters": {
+    "env": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "InvoiceBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Fn::Sub": "k2b-order-management-invoices-${env}-${AWS::AccountId}"
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "IgnorePublicAcls": true,
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "BucketName": {
+      "Description": "Name of the invoice S3 bucket",
+      "Value": {
+        "Ref": "InvoiceBucket"
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "InvoiceBucket-${env}"
+        }
+      }
+    },
+    "BucketArn": {
+      "Description": "ARN of the invoice S3 bucket",
+      "Value": {
+        "Fn::GetAtt": ["InvoiceBucket", "Arn"]
+      },
+      "Export": {
+        "Name": {
+          "Fn::Sub": "InvoiceBucketArn-${env}"
+        }
+      }
+    }
+  }
+}
