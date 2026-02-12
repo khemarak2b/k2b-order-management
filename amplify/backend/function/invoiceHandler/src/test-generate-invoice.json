@@ -1,0 +1,16 @@
+{
+  "httpMethod": "POST",
+  "path": "/invoices/order/30/generate",
+  "headers": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer test-token"
+  },
+  "body": "{\"orderId\": 1, \"customNotes\": \"Test invoice generation\"}",
+  "requestContext": {
+    "authorizer": {
+      "claims": {
+        "sub": "test-user-id"
+      }
+    }
+  }
+}

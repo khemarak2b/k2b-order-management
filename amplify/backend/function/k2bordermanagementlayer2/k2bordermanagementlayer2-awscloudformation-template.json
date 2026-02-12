@@ -20,19 +20,19 @@
     }
   },
   "Resources": {
-    "LambdaLayerVersiond9f3ede7": {
+    "LambdaLayerVersionb7c15b6d": {
       "Type": "AWS::Lambda::LayerVersion",
       "Properties": {
         "CompatibleRuntimes": [
-          "nodejs18.x"
+          "nodejs22.x"
         ],
         "Content": {
           "S3Bucket": {
             "Ref": "deploymentBucketName"
           },
-          "S3Key": "amplify-builds/k2bordermanagementlayer2-LambdaLayerVersiond9f3ede7-build.zip"
+          "S3Key": "amplify-builds/k2bordermanagementlayer2-LambdaLayerVersionb7c15b6d-build.zip"
         },
-        "Description": "Updated layer version 2026-02-11T08:39:10.205Z",
+        "Description": "Updated layer version 2026-02-11T16:26:03.378Z",
         "LayerName": {
           "Fn::Sub": [
             "k2bordermanagementlayer2-${env}",
@@ -47,20 +47,20 @@
       "DeletionPolicy": "Delete",
       "UpdateReplacePolicy": "Retain"
     },
-    "LambdaLayerPermissionAwsOrgob5t427dep2d9f3ede7": {
+    "LambdaLayerPermissionAwsOrgob5t427dep2b7c15b6d": {
       "Type": "AWS::Lambda::LayerVersionPermission",
       "Properties": {
         "Action": "lambda:GetLayerVersion",
-        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer2-dev:1",
+        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer2-dev:3",
         "OrganizationId": "o-b5t427dep2",
         "Principal": "*"
       }
     },
-    "LambdaLayerPermissionPrivated9f3ede7": {
+    "LambdaLayerPermissionPrivateb7c15b6d": {
       "Type": "AWS::Lambda::LayerVersionPermission",
       "Properties": {
         "Action": "lambda:GetLayerVersion",
-        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer2-dev:1",
+        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer2-dev:3",
         "Principal": {
           "Ref": "AWS::AccountId"
         }
@@ -70,7 +70,7 @@
   "Outputs": {
     "Arn": {
       "Value": {
-        "Ref": "LambdaLayerVersiond9f3ede7"
+        "Ref": "LambdaLayerVersionb7c15b6d"
       }
     }
   }

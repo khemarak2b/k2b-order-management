@@ -1,11 +1,11 @@
 const puppeteer = require("puppeteer-core");
 const chromium = require("@sparticuz/chromium");
-const { generateInvoiceHTML } = require("../templates/invoiceTemplate");
+const { renderInvoiceHTML } = require("../templates/templateHelper");
 
 /**
  * Generate invoice PDF from invoice data
  */
-const generateInvoicePDF = async (invoice, lineItems, companyDetails) => {
+const generateInvoicePDF = async (invoice, lineItems, companyDetails, billingAddress, shippingAddress, companyLogo) => {
   let browser;
 
   try {
@@ -20,10 +20,10 @@ const generateInvoicePDF = async (invoice, lineItems, companyDetails) => {
       ignoreHTTPSErrors: true,
     });
 
-    const page = await browser.createPage();
+    const page = await browser.newPage();
 
-    // Generate HTML
-    const html = generateInvoiceHTML(invoice, lineItems, companyDetails);
+    // Generate HTML using Handlebars template
+    const html = renderInvoiceHTML(invoice, lineItems, companyDetails, billingAddress, shippingAddress, companyLogo);
 
     // Set content
     await page.setContent(html, {

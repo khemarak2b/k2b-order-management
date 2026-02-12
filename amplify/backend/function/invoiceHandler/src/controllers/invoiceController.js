@@ -215,33 +215,57 @@ exports.generateInvoiceFromOrder = async (req, res) => {
     try {
       console.log("[generateInvoiceFromOrder] Generating PDF for invoice:", createdInvoice.id);
 
+      // Read logo if available
+      let companyLogo = null;
+      try {
+        const fs = require("fs");
+        const path = require("path");
+        const logoPath = path.join(__dirname, "../templates/invoice-logo.png");
+        if (fs.existsSync(logoPath)) {
+          const logoBuffer = fs.readFileSync(logoPath);
+          companyLogo = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+        }
+      } catch (error) {
+        console.warn("[generateInvoiceFromOrder] Could not load logo:", error.message);
+      }
+
       const pdfBuffer = await generateInvoicePDF(
         {
           ...createdInvoice,
-          order_number: order.order_number,
+          orderNumber: order.order_number,
         },
         result.line_items,
-        companyDetails
+        companyDetails,
+        createdInvoice.billingAddress,
+        createdInvoice.shippingAddress,
+        companyLogo
       );
 
       const s3Upload = await uploadInvoicePDF(pdfBuffer, createdInvoice.invoice_number);
 
       // Update invoice with PDF URL
-      await invoiceDb.updateInvoice(req.pool, {
+      const updatedInvoiceData = await invoiceDb.updateInvoice(req.pool, {
         id: createdInvoice.id,
         pdf_url: s3Upload.url,
       });
 
       console.log("[generateInvoiceFromOrder] PDF generated and uploaded successfully");
+
+      // Return updated invoice with PDF URL
+      res.status(201).json(
+        formatResponse({
+          invoice: updatedInvoiceData,
+          line_items: result.line_items,
+        })
+      );
     } catch (pdfError) {
       console.error(
         "[generateInvoiceFromOrder] Warning: PDF generation failed, but invoice was created:",
         pdfError.message
       );
-      // Don't fail the response if PDF generation fails - invoice is already created
+      // Return original invoice without PDF URL
+      res.status(201).json(formatResponse(result));
     }
-
-    res.status(201).json(formatResponse(result));
   } catch (error) {
     console.error("[generateInvoiceFromOrder] Error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });

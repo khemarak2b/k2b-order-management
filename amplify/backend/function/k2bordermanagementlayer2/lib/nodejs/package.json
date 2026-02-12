@@ -4,7 +4,8 @@
   "main": "index.js",
   "dependencies": {
     "puppeteer-core": "^21.0.0",
-    "@sparticuz/chromium": "^143.0.4"
+    "@sparticuz/chromium": "^143.0.4",
+    "handlebars": "^4.7.8"
   },
   "devDependencies": {}
 }

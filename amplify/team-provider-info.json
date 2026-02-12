@@ -32,7 +32,7 @@
         },
         "invoiceHandler": {
           "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
-          "s3Key": "amplify-builds/invoiceHandler-336f537365743763746f-build.zip"
+          "s3Key": "amplify-builds/invoiceHandler-50375635704153524d61-build.zip"
         },
         "k2bordermanagementlayer2": {
           "deploymentBucketName": "amplify-k2bordermanagement-dev-58c36-deployment",
