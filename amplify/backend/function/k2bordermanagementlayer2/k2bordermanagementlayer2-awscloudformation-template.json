@@ -20,7 +20,7 @@
     }
   },
   "Resources": {
-    "LambdaLayerVersion19762806": {
+    "LambdaLayerVersionf91389a3": {
       "Type": "AWS::Lambda::LayerVersion",
       "Properties": {
         "CompatibleRuntimes": [
@@ -30,9 +30,9 @@
           "S3Bucket": {
             "Ref": "deploymentBucketName"
           },
-          "S3Key": "amplify-builds/k2bordermanagementlayer2-LambdaLayerVersion19762806-build.zip"
+          "S3Key": "amplify-builds/k2bordermanagementlayer2-LambdaLayerVersionf91389a3-build.zip"
         },
-        "Description": "Updated layer version 2026-02-12T03:55:13.383Z",
+        "Description": "Updated layer version 2026-02-13T04:41:44.905Z",
         "LayerName": {
           "Fn::Sub": [
             "k2bordermanagementlayer2-${env}",
@@ -47,20 +47,20 @@
       "DeletionPolicy": "Delete",
       "UpdateReplacePolicy": "Retain"
     },
-    "LambdaLayerPermissionAwsOrgob5t427dep219762806": {
+    "LambdaLayerPermissionAwsOrgob5t427dep2f91389a3": {
       "Type": "AWS::Lambda::LayerVersionPermission",
       "Properties": {
         "Action": "lambda:GetLayerVersion",
-        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer2-dev:4",
+        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer2-dev:5",
         "OrganizationId": "o-b5t427dep2",
         "Principal": "*"
       }
     },
-    "LambdaLayerPermissionPrivate19762806": {
+    "LambdaLayerPermissionPrivatef91389a3": {
       "Type": "AWS::Lambda::LayerVersionPermission",
       "Properties": {
         "Action": "lambda:GetLayerVersion",
-        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer2-dev:4",
+        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer2-dev:5",
         "Principal": {
           "Ref": "AWS::AccountId"
         }
@@ -70,7 +70,7 @@
   "Outputs": {
     "Arn": {
       "Value": {
-        "Ref": "LambdaLayerVersion19762806"
+        "Ref": "LambdaLayerVersionf91389a3"
       }
     }
   }

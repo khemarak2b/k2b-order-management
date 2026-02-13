@@ -7,7 +7,7 @@
     "phone": "+61 2 1234 5678",
     "website": "www.k2bsolutions.com.au"
   },
-  "companyLogo": null,
+  "companyLogo": "invoice-logo.png",
   "invoice": {
     "invoiceNumber": "INV-2026-001",
     "invoiceDateFormatted": "12/02/2026",

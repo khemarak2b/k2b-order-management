@@ -32,7 +32,6 @@ const requireParamUserIdMatch = requireUserIdMatch((req) => req.params.userId);
 router.get("/user/:userId", requireParamUserIdMatch, invoiceController.getUserInvoices);
 router.get("/:id", requireInvoiceOwnership, invoiceController.getInvoice);
 router.get("/order/:orderId", invoiceController.getInvoiceByOrder);
-router.post("/order/:orderId/generate", invoiceController.generateInvoiceFromOrder);
 
 // Invoice actions
 router.put("/:id/send", requireInvoiceOwnership, invoiceController.sendInvoice);

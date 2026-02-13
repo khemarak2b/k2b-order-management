@@ -89,12 +89,12 @@
             "DB_SECRET_ARN": {
               "Ref": "databaseSecretArn"
             },
-            "COMPANY_NAME": "K2B",
-            "COMPANY_ABN": "12345678901",
-            "COMPANY_ADDRESS": "123 Business Street, Sydney NSW 2000",
-            "COMPANY_EMAIL": "invoices@k2b.com",
-            "COMPANY_PHONE": "+61 2 1234 5678",
-            "COMPANY_WEBSITE": "www.k2b.com",
+            "COMPANY_NAME": "Khemara Pty Ltd",
+            "COMPANY_ABN": "48 681 994 169",
+            "COMPANY_ADDRESS": "Liverpool NSW 2170",
+            "COMPANY_EMAIL": "hello@khemara.com.au",
+            "COMPANY_PHONE": "040 600 8472",
+            "COMPANY_WEBSITE": "khemara.com.au",
             "INVOICE_BUCKET_NAME": {
               "Ref": "invoiceBucketName"
             },

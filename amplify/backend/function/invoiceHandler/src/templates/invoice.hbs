@@ -1,475 +1,521 @@
-<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <link rel="preconnect" href="https://rsms.me/">
-  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@100;300;400;500;600;700;900&display=swap" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Inter', 'Noto Sans Khmer', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      color: #2d3436;
-      background: white;
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    @page {
-      size: A4;
-      margin: 12mm 12mm 20mm 12mm;
-    }
-    @page :first {
-      margin-bottom: 20mm;
-    }
-    @page :nth(n+2) {
-      margin-bottom: 20mm;
-    }
-    html, body {
-      height: 100%;
-    }
-    .container {
-      max-width: 210mm;
-      margin: 0 auto;
-      background: white;
-      padding: 15px;
-      display: flex;
-      flex-direction: column;
-      min-height: 100%;
-    }
-    
-    /* Header Section */
-    .header {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 25px;
-      margin-bottom: 20px;
-      align-items: start;
-    }
-    .company-section {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .company-logo {
-      max-width: 100px;
-      height: auto;
-      margin-bottom: 6px;
-    }
-    .company-name {
-      font-size: 22px;
-      font-weight: 700;
-      color: #214A36;
-      margin: 0;
-    }
-    .company-meta {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      font-size: 11px;
-      color: #636e72;
-    }
-    .company-meta p {
-      margin: 0;
-    }
-    .company-meta strong {
-      color: #214A36;
-      font-weight: 600;
-    }
-    
-    .invoice-section {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-      background: #f8f9fa;
-      padding: 14px;
-      border-radius: 8px;
-    }
-    .invoice-title {
-      font-size: 28px;
-      font-weight: 700;
-      color: #214A36;
-      margin: 0;
-      letter-spacing: -0.5px;
-    }
-    .invoice-meta {
-      display: grid;
-      grid-template-columns: auto auto;
-      gap: 16px 45px;
-      font-size: 11px;
-      color: #636e72;
-      text-align: right;
-    }
-    .invoice-meta strong {
-      color: #214A36;
-      font-weight: 600;
-      display: block;
-      margin-bottom: 1px;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-    
-    /* Divider */
-    .divider {
-      height: 1px;
-      background: #e8e8e8;
-      margin: 15px 0;
-    }
-    
-    /* Address Section */
-    .addresses {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 18px;
-    }
-    .address-block {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .address-label {
-      font-size: 10px;
-      font-weight: 700;
-      color: #214A36;
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-      margin-bottom: 2px;
-    }
-    .address-content {
-      font-size: 12px;
-      color: #2d3436;
-      line-height: 1.4;
-    }
-    .address-content strong {
-      font-weight: 600;
-    }
-    
-    /* Table Section */
-    .items-section {
-      margin-bottom: 18px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 0;
-    }
-    table thead {
-      background: #214A36;
-      color: white;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    table th {
-      padding: 8px 10px;
-      text-align: left;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-      text-transform: uppercase;
-    }
-    table th:first-child {
-      border-radius: 6px 0 0 6px;
-    }
-    table th:last-child {
-      text-align: right;
-      border-radius: 0 6px 6px 0;
-    }
-    table tbody tr {
-      border-bottom: 1px solid #ecf0f1;
-      transition: background-color 0.2s;
-    }
-    table tbody tr:hover {
-      background-color: #f8f9fa;
-    }
-    table td {
-      padding: 8px 10px;
-      font-size: 12px;
-      color: #2d3436;
-    }
-    table td:last-child {
-      text-align: right;
-      font-weight: 600;
-      color: #214A36;
-    }
-    
-    /* Totals Section */
-    .totals-section {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 18px;
-    }
-    .totals-box {
-      width: 280px;
-    }
-    .totals-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 15px;
-      padding: 6px 0;
-      border-bottom: 1px solid #ecf0f1;
-      font-size: 11px;
-      color: #636e72;
-    }
-    .totals-row strong {
-      color: #2d3436;
-      font-weight: 600;
-    }
-    .totals-row.subtotal {
-      padding: 6px 0;
-    }
-    .totals-row.gst {
-      padding: 6px 0;
-    }
-    .totals-row.discount {
-      color: #e74c3c;
-    }
-    .totals-row.discount strong {
-      color: #e74c3c;
-    }
-    .totals-row.shipping {
-      padding: 6px 0;
-    }
-    .totals-divider {
-      height: 1px;
-      background: #214A36;
-      margin: 6px 0;
-    }
-    .totals-row.total {
-      font-size: 13px;
-      font-weight: 700;
-      color: #214A36;
-      padding: 8px 0;
-    }
-    .totals-row.due {
-      padding: 10px;
-      background: #f0f6f4;
-      border-radius: 3px;
-      border: none;
-      border-left: 3px solid #214A36;
-      font-size: 12px;
-      font-weight: 700;
-      color: #214A36;
-      margin-top: 6px;
-    }
-    
-    /* Notes Section */
-    .notes-section {
-      margin-bottom: 18px;
-      padding: 10px;
-      background: #f8fafb;
-      border-left: 3px solid #214A36;
-      border-radius: 3px;
-    }
-    .notes-section h3 {
-      font-size: 10px;
-      font-weight: 700;
-      color: #214A36;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-      margin-bottom: 4px;
-    }
-    .notes-section p {
-      font-size: 11px;
-      color: #636e72;
-      margin: 0;
-      line-height: 1.4;
-    }
-    
-    /* Content wrapper */
-    .content-wrapper {
-      flex: 1;
-    }
-    
-    /* Footer */
-    .footer {
-      margin-top: auto;
-      padding-top: 10px;
-      border-top: 1px solid #ecf0f1;
-      text-align: center;
-      font-size: 10px;
-      color: #95a5a6;
-      page-break-inside: avoid;
-    }
-    .footer p {
-      margin: 2px 0;
-    }
-    .footer p:first-child {
-      color: #636e72;
-      font-weight: 500;
-    }
-    
-    /* Page Number */
-    .page-number {
-      text-align: right;
-      padding-top: 20px;
-      font-size: 10px;
-      color: #95a5a6;
-      border-top: 1px solid #ecf0f1;
-      margin-top: 10px;
-    }
-    
-    /* Utility Classes */
-    .text-right {
-      text-align: right;
-    }
-    .mt-small {
-      margin-top: 8px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="content-wrapper">
-      <!-- Header -->
-      <div class="header">
-      <div class="company-section">
-        {{#if companyLogo}}
-          <img src="{{companyLogo}}" alt="{{companyDetails.name}} Logo" class="company-logo">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://rsms.me/" />
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@100;300;400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          "Inter",
+          "Noto Sans Khmer",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        color: #2d3436;
+        background: white;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      @page {
+        size: A4;
+        margin: 12mm 12mm 20mm 12mm;
+      }
+      @page :first {
+        margin-bottom: 20mm;
+      }
+      @page :nth(n+2) {
+        margin-bottom: 20mm;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      .container {
+        max-width: 210mm;
+        margin: 0 auto;
+        background: white;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+      }
+
+      /* Header Section */
+      .header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 20px;
+        align-items: start;
+      }
+      .company-section {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .company-logo {
+        max-width: 100px;
+        height: auto;
+        margin-bottom: 6px;
+      }
+      .company-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: #214a36;
+        margin: 0;
+      }
+      .company-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: 11px;
+        color: #636e72;
+      }
+      .company-meta p {
+        margin: 0;
+      }
+      .company-meta strong {
+        color: #214a36;
+        font-weight: 600;
+      }
+
+      .invoice-section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+        background: #f8f9fa;
+        padding: 14px;
+        border-radius: 8px;
+      }
+      .right-column {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .invoice-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #214a36;
+        margin: 0;
+        letter-spacing: -0.5px;
+      }
+      .invoice-meta {
+        display: grid;
+        grid-template-columns: auto auto;
+        gap: 16px 45px;
+        font-size: 11px;
+        color: #636e72;
+        text-align: right;
+      }
+      .invoice-meta strong {
+        color: #214a36;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 1px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      /* Divider */
+      .divider {
+        height: 1px;
+        background: #e8e8e8;
+        margin: 15px 0;
+      }
+
+      /* Address Section */
+      .addresses {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 18px;
+      }
+      .address-block {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .address-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: #214a36;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        margin-bottom: 2px;
+      }
+      .address-content {
+        font-size: 12px;
+        color: #2d3436;
+        line-height: 1.4;
+      }
+      .address-content strong {
+        font-weight: 600;
+      }
+
+      /* Table Section */
+      .items-section {
+        margin-bottom: 18px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 0;
+      }
+      table thead {
+        background: #214a36;
+        color: white;
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      table th {
+        padding: 8px 10px;
+        text-align: left;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        text-transform: uppercase;
+      }
+      table th:first-child {
+        border-radius: 6px 0 0 6px;
+      }
+      table th:last-child {
+        text-align: right;
+        border-radius: 0 6px 6px 0;
+      }
+      table tbody tr {
+        border-bottom: 1px solid #ecf0f1;
+        transition: background-color 0.2s;
+      }
+      table tbody tr:hover {
+        background-color: #f8f9fa;
+      }
+      table td {
+        padding: 8px 10px;
+        font-size: 12px;
+        color: #2d3436;
+      }
+      table td:last-child {
+        text-align: right;
+        font-weight: 600;
+        color: #214a36;
+      }
+
+      /* Totals Section */
+      .totals-section {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 18px;
+      }
+      .totals-box {
+        width: 280px;
+      }
+      .totals-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 15px;
+        padding: 6px 0;
+        border-bottom: 1px solid #ecf0f1;
+        font-size: 11px;
+        color: #636e72;
+      }
+      .totals-row strong {
+        color: #2d3436;
+        font-weight: 600;
+      }
+      .totals-row.subtotal {
+        padding: 6px 0;
+      }
+      .totals-row.gst {
+        padding: 6px 0;
+      }
+      .totals-row.discount {
+        color: #e74c3c;
+      }
+      .totals-row.discount strong {
+        color: #e74c3c;
+      }
+      .totals-row.shipping {
+        padding: 6px 0;
+      }
+      .totals-divider {
+        height: 1px;
+        background: #214a36;
+        margin: 6px 0;
+      }
+      .totals-row.total {
+        font-size: 13px;
+        font-weight: 700;
+        color: #214a36;
+        padding: 8px 0;
+      }
+      .totals-row.due {
+        padding: 10px;
+        background: #f0f6f4;
+        border-radius: 3px;
+        border: none;
+        border-left: 3px solid #214a36;
+        font-size: 12px;
+        font-weight: 700;
+        color: #214a36;
+        margin-top: 6px;
+      }
+
+      /* Notes Section */
+      .notes-section {
+        margin-bottom: 18px;
+        padding: 10px;
+        background: #f8fafb;
+        border-left: 3px solid #214a36;
+        border-radius: 3px;
+      }
+      .notes-section h3 {
+        font-size: 10px;
+        font-weight: 700;
+        color: #214a36;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 4px;
+      }
+      .notes-section p {
+        font-size: 11px;
+        color: #636e72;
+        margin: 0;
+        line-height: 1.4;
+      }
+
+      /* Content wrapper */
+      .content-wrapper {
+        flex: 1;
+      }
+
+      /* Footer */
+      .footer {
+        margin-top: auto;
+        padding-top: 10px;
+        border-top: 1px solid #ecf0f1;
+        text-align: center;
+        font-size: 10px;
+        color: #95a5a6;
+        page-break-inside: avoid;
+      }
+      .footer p {
+        margin: 2px 0;
+      }
+      .footer p:first-child {
+        color: #636e72;
+        font-weight: 500;
+      }
+
+      /* Page Number */
+      .page-number {
+        text-align: right;
+        padding-top: 20px;
+        font-size: 10px;
+        color: #95a5a6;
+        border-top: 1px solid #ecf0f1;
+        margin-top: 10px;
+      }
+
+      /* Utility Classes */
+      .text-right {
+        text-align: right;
+      }
+      .mt-small {
+        margin-top: 8px;
+      }
+
+      /* Amount Due Card */
+      .amount-due-card {
+        background: #f8f9fa;
+        padding: 14px;
+        border-radius: 8px;
+        text-align: right;
+        width: 100%;
+      }
+      .amount-due-card .label {
+        font-size: 10px;
+        font-weight: 700;
+        color: #214a36;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        margin-bottom: 6px;
+        display: block;
+      }
+      .amount-due-card .amount {
+        font-size: 20px;
+        font-weight: 700;
+        color: #214a36;
+        letter-spacing: -0.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="content-wrapper">
+        <!-- Header -->
+        <div class="header">
+          <div class="company-section">
+            {{#if companyLogo}}
+              <img src="{{companyLogo}}" alt="{{companyDetails.name}} Logo" class="company-logo" />
+            {{/if}}
+            <h1 class="company-name">{{companyDetails.name}}</h1>
+            <div class="company-meta">
+              <p><strong>ABN:</strong> {{companyDetails.abn}}</p>
+              <p><strong>Email:</strong> {{companyDetails.email}}</p>
+              <p><strong>Phone:</strong> {{companyDetails.phone}}</p>
+              <p><strong>Web:</strong> {{companyDetails.website}}</p>
+              <p><strong>Address:</strong> {{companyDetails.address}}</p>
+            </div>
+          </div>
+
+          <div class="right-column">
+            <div class="invoice-section">
+              <h2 class="invoice-title">INVOICE</h2>
+              <div class="invoice-meta">
+                <div>
+                  <strong>Invoice #</strong>
+                  {{invoice.invoiceNumber}}
+                </div>
+                <div>
+                  <strong>Order #</strong>
+                  {{invoice.orderNumber}}
+                </div>
+                <div>
+                  <strong>Date</strong>
+                  {{invoice.invoiceDateFormatted}}
+                </div>
+                <div>
+                  <strong>Due Date</strong>
+                  {{invoice.dueDateFormatted}}
+                </div>
+              </div>
+            </div>
+            {{#if companyLogo}}
+              <div class="amount-due-card">
+                <span class="label">Amount Due</span>
+                <div class="amount">${{invoice.amountDue}}</div>
+              </div>
+            {{/if}}
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Addresses -->
+        <div class="addresses">
+          <div class="address-block">
+            <div class="address-label">Bill To</div>
+            <div class="address-content">
+              <strong>{{billingAddress.firstName}} {{billingAddress.lastName}}</strong><br />
+              {{billingAddress.addressLine1}}<br />
+              {{#if billingAddress.addressLine2}}
+                {{billingAddress.addressLine2}}<br />
+              {{/if}}
+              {{billingAddress.city}}
+              {{billingAddress.state}}
+              {{billingAddress.postcode}}
+            </div>
+          </div>
+
+          <div class="address-block">
+            <div class="address-label">Ship To</div>
+            <div class="address-content">
+              <strong>{{shippingAddress.firstName}} {{shippingAddress.lastName}}</strong><br />
+              {{shippingAddress.addressLine1}}<br />
+              {{#if shippingAddress.addressLine2}}
+                {{shippingAddress.addressLine2}}<br />
+              {{/if}}
+              {{shippingAddress.city}}
+              {{shippingAddress.state}}
+              {{shippingAddress.postcode}}
+            </div>
+          </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="items-section">
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th style="text-align: center;">Quantity</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each lineItems}}
+                <tr>
+                  <td>{{this.productName}}</td>
+                  <td style="text-align: center;">{{this.quantity}}</td>
+                  <td class="text-right">${{this.unitPrice}}</td>
+                  <td>${{this.lineTotal}}</td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totals -->
+        <div class="totals-section">
+          <div class="totals-box">
+            <div class="totals-row subtotal">
+              <strong>Subtotal (excl. GST)</strong>
+              <span>${{invoice.subtotal}}</span>
+            </div>
+            <div class="totals-row gst">
+              <strong>GST (10%)</strong>
+              <span>${{invoice.gstAmount}}</span>
+            </div>
+            {{#if invoice.discountAmount}}
+              <div class="totals-row discount">
+                <strong>Discount</strong>
+                <span>-${{invoice.discountAmount}}</span>
+              </div>
+            {{/if}}
+            {{#if invoice.otherCharges}}
+              <div class="totals-row shipping">
+                <strong>Shipping</strong>
+                <span>${{invoice.otherCharges}}</span>
+              </div>
+            {{/if}}
+            <div class="totals-divider"></div>
+            <div class="totals-row total">
+              <strong>Total (incl. GST)</strong>
+              <span>${{invoice.totalAmount}}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        {{#if invoice.notes}}
+          <div class="notes-section">
+            <h3>Notes</h3>
+            <p>{{invoice.notes}}</p>
+          </div>
         {{/if}}
-        <h1 class="company-name">{{companyDetails.name}}</h1>
-        <div class="company-meta">
-          <p><strong>ABN:</strong> {{companyDetails.abn}}</p>
-          <p>{{companyDetails.address}}</p>
-          <p><strong>Email:</strong> {{companyDetails.email}}</p>
-          <p><strong>Phone:</strong> {{companyDetails.phone}}</p>
-          <p><strong>Web:</strong> {{companyDetails.website}}</p>
-        </div>
       </div>
-      
-      <div class="invoice-section">
-        <h2 class="invoice-title">INVOICE</h2>
-        <div class="invoice-meta">
-          <div>
-            <strong>Invoice #</strong>
-            {{invoice.invoiceNumber}}
-          </div>
-          <div>
-            <strong>Order #</strong>
-            {{invoice.orderNumber}}
-          </div>
-          <div>
-            <strong>Date</strong>
-            {{invoice.invoiceDateFormatted}}
-          </div>
-          <div>
-            <strong>Due Date</strong>
-            {{invoice.dueDateFormatted}}
-          </div>
-        </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>Thank you for your business!</p>
+        <p>Generated on {{currentDate}}</p>
       </div>
     </div>
-
-    <div class="divider"></div>
-
-    <!-- Addresses -->
-    <div class="addresses">
-      <div class="address-block">
-        <div class="address-label">Bill To</div>
-        <div class="address-content">
-          <strong>{{billingAddress.firstName}} {{billingAddress.lastName}}</strong><br>
-          {{billingAddress.addressLine1}}<br>
-          {{#if billingAddress.addressLine2}}
-            {{billingAddress.addressLine2}}<br>
-          {{/if}}
-          {{billingAddress.city}} {{billingAddress.state}} {{billingAddress.postcode}}
-        </div>
-      </div>
-      
-      <div class="address-block">
-        <div class="address-label">Ship To</div>
-        <div class="address-content">
-          <strong>{{shippingAddress.firstName}} {{shippingAddress.lastName}}</strong><br>
-          {{shippingAddress.addressLine1}}<br>
-          {{#if shippingAddress.addressLine2}}
-            {{shippingAddress.addressLine2}}<br>
-          {{/if}}
-          {{shippingAddress.city}} {{shippingAddress.state}} {{shippingAddress.postcode}}
-        </div>
-      </div>
-    </div>
-
-    <!-- Items Table -->
-    <div class="items-section">
-      <table>
-        <thead>
-          <tr>
-            <th>Description</th>
-            <th style="text-align: center;">Quantity</th>
-            <th class="text-right">Unit Price</th>
-            <th class="text-right">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#each lineItems}}
-            <tr>
-              <td>{{this.productName}}</td>
-              <td style="text-align: center;">{{this.quantity}}</td>
-              <td class="text-right">${{this.unitPrice}}</td>
-              <td>${{this.lineTotal}}</td>
-            </tr>
-          {{/each}}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Totals -->
-    <div class="totals-section">
-      <div class="totals-box">
-        <div class="totals-row subtotal">
-          <strong>Subtotal (excl. GST)</strong>
-          <span>${{invoice.subtotal}}</span>
-        </div>
-        <div class="totals-row gst">
-          <strong>GST (10%)</strong>
-          <span>${{invoice.gstAmount}}</span>
-        </div>
-        {{#if invoice.discountAmount}}
-          <div class="totals-row discount">
-            <strong>Discount</strong>
-            <span>-${{invoice.discountAmount}}</span>
-          </div>
-        {{/if}}
-        {{#if invoice.otherCharges}}
-          <div class="totals-row shipping">
-            <strong>Shipping</strong>
-            <span>${{invoice.otherCharges}}</span>
-          </div>
-        {{/if}}
-        <div class="totals-divider"></div>
-        <div class="totals-row total">
-          <strong>Total (incl. GST)</strong>
-          <span>${{invoice.totalAmount}}</span>
-        </div>
-        <div class="totals-row due">
-          <strong>Amount Due</strong>
-          <span>${{invoice.amountDue}}</span>
-        </div>
-      </div>
-    </div>
-
-      <!-- Notes -->
-      {{#if invoice.notes}}
-        <div class="notes-section">
-          <h3>Notes</h3>
-          <p>{{invoice.notes}}</p>
-        </div>
-      {{/if}}
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <p>Thank you for your business!</p>
-      <p>Generated on {{currentDate}}</p>
-    </div>
-  </div>
-</body>
+  </body>
 </html>
