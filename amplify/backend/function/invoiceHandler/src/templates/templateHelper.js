@@ -46,24 +46,28 @@ const renderInvoiceHTML = (invoice, lineItems, companyDetails, billingAddress, s
     // Compile the template
     const template = Handlebars.compile(templateContent);
 
-    // Format invoice data
+    // Format invoice data - handle both camelCase and snake_case field names
     const formattedInvoice = {
       ...invoice,
-      invoiceDateFormatted: formatDate(invoice.invoiceDate || invoice.created_at),
-      dueDateFormatted: formatDate(invoice.dueDate),
-      subtotal: formatCurrency(invoice.subtotal),
-      gstAmount: formatCurrency(invoice.gstAmount),
-      discountAmount: formatCurrency(invoice.discountAmount),
-      otherCharges: formatCurrency(invoice.otherCharges),
-      totalAmount: formatCurrency(invoice.totalAmount),
-      amountDue: formatCurrency(invoice.amountDue),
+      invoiceNumber: invoice.invoice_number || invoice.invoiceNumber,
+      invoiceDateFormatted: formatDate(invoice.invoice_date || invoice.invoiceDate || invoice.created_at),
+      dueDateFormatted: formatDate(invoice.due_date || invoice.dueDate),
+      orderNumber: invoice.order_number || invoice.orderNumber,
+      subtotal: formatCurrency(invoice.subtotal || 0),
+      gstAmount: formatCurrency(invoice.gst_amount || invoice.gstAmount || 0),
+      discountAmount: formatCurrency(invoice.discount_amount || invoice.discountAmount || 0),
+      otherCharges: formatCurrency(invoice.other_charges || invoice.otherCharges || 0),
+      totalAmount: formatCurrency(invoice.total_amount || invoice.totalAmount || 0),
+      amountDue: formatCurrency(invoice.amount_due || invoice.amountDue || 0),
     };
 
-    // Format line items
+    // Format line items - handle both camelCase and snake_case field names
     const formattedLineItems = lineItems.map((item) => ({
       ...item,
-      unitPrice: formatCurrency(item.unitPrice),
-      lineTotal: formatCurrency(item.lineTotal),
+      productName: item.product_name || item.productName,
+      quantity: item.quantity || 0,
+      unitPrice: formatCurrency(item.unit_price || item.unitPrice || 0),
+      lineTotal: formatCurrency(item.line_total || item.lineTotal || 0),
     }));
 
     // Prepare data for rendering

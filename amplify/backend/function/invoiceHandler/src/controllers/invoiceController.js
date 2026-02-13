@@ -236,8 +236,8 @@ exports.generateInvoiceFromOrder = async (req, res) => {
         },
         result.line_items,
         companyDetails,
-        createdInvoice.billingAddress,
-        createdInvoice.shippingAddress,
+        createdInvoice.billing_address || order.billing_address,
+        createdInvoice.shipping_address || order.shipping_address,
         companyLogo
       );
 

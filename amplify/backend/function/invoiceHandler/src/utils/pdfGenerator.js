@@ -31,16 +31,34 @@ const generateInvoicePDF = async (invoice, lineItems, companyDetails, billingAdd
       timeout: 60000,
     });
 
-    // Generate PDF
+    // Generate PDF with page numbering
+    const footerTemplate = `
+      <style>
+        * { margin: 0; padding: 0; }
+        body { font-size: 10px; font-family: Arial, sans-serif; }
+        .footer { text-align: right; padding-right: 20px; color: #95a5a6; margin-left: 20px; }
+      </style>
+      <div class="footer">Page <span class="pageNumber"></span> of <span class="totalPages"></span></div>
+    `;
+
+    const headerTemplate = `
+      <div class="header">
+  
+      </div>
+    `;
+
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       margin: {
         top: "20px",
         right: "20px",
-        bottom: "20px",
+        bottom: "30px",
         left: "20px",
       },
+      headerTemplate: headerTemplate,
+      footerTemplate: footerTemplate,
+      displayHeaderFooter: true,
     });
 
     console.log("[generateInvoicePDF] PDF generated successfully, size:", pdfBuffer.length);
