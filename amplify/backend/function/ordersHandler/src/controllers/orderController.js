@@ -359,8 +359,6 @@ async function sendOrderCreatedNotification(orderResults, pool) {
         currencyCode: order.currency_code,
         shippingAddress: order.shipping_address,
         billingAddress: order.billing_address,
-        orderItems: order.order_items || [],
-        paymentStatus: "pending",
         notes: order.notes,
         createdAt: formatAusDate(order.created_at),
         updatedAt: formatAusDate(order.updated_at),
