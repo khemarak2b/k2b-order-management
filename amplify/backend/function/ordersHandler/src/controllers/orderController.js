@@ -337,6 +337,12 @@ async function sendOrderCreatedNotification(orderResults, pool) {
 
     const user = result.rows[0];
 
+    // Format dates in Australian format (DD/MM/YYYY)
+    const formatAusDate = (date) => {
+      if (!date) return null;
+      return new Date(date).toLocaleDateString('en-AU');
+    };
+
     await sendNotification({
       to: user.email,
       subject: `Order Received #${order.order_number}`,
@@ -353,9 +359,11 @@ async function sendOrderCreatedNotification(orderResults, pool) {
         currencyCode: order.currency_code,
         shippingAddress: order.shipping_address,
         billingAddress: order.billing_address,
+        orderItems: order.order_items || [],
+        paymentStatus: "pending",
         notes: order.notes,
-        createdAt: order.created_at,
-        updatedAt: order.updated_at,
+        createdAt: formatAusDate(order.created_at),
+        updatedAt: formatAusDate(order.updated_at),
       },
     });
   } finally {
