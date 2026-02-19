@@ -1,4 +1,5 @@
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION || "ap-southeast-2" });
 
@@ -40,4 +41,27 @@ const uploadInvoicePDF = async (pdfBuffer, invoiceNumber) => {
   }
 };
 
-module.exports = { uploadInvoicePDF };
+/**
+ * Get presigned URL for downloading invoice PDF
+ */
+const getInvoicePDFPresignedUrl = async (bucketName, invoiceNumber, expirySeconds = 3600) => {
+  try {
+    const key = `invoices/${new Date().getFullYear()}/${invoiceNumber}.pdf`;
+
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+    });
+
+    const url = await getSignedUrl(s3Client, command, { expiresIn: expirySeconds });
+
+    console.log("[getInvoicePDFPresignedUrl] Presigned URL generated for:", invoiceNumber);
+
+    return url;
+  } catch (error) {
+    console.error("[getInvoicePDFPresignedUrl] Error:", error.message);
+    throw error;
+  }
+};
+
+module.exports = { uploadInvoicePDF, getInvoicePDFPresignedUrl };

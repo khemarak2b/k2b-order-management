@@ -22,9 +22,7 @@ const conditionalAuthMiddleware = (req, res, next) => {
 router.use(conditionalAuthMiddleware);
 
 // Middleware for invoice ownership
-const requireInvoiceOwnership = createOwnershipMiddleware(
-  async (req) => invoiceDb.getInvoice(req.pool, req.params.id)
-);
+const requireInvoiceOwnership = createOwnershipMiddleware(async (req) => invoiceDb.getInvoice(req.pool, req.params.id));
 
 const requireParamUserIdMatch = requireUserIdMatch((req) => req.params.userId);
 
@@ -32,6 +30,8 @@ const requireParamUserIdMatch = requireUserIdMatch((req) => req.params.userId);
 router.get("/user/:userId", requireParamUserIdMatch, invoiceController.getUserInvoices);
 router.get("/:id", requireInvoiceOwnership, invoiceController.getInvoice);
 router.get("/order/:orderId", invoiceController.getInvoiceByOrder);
+router.get("/:id/pdf-download-url", requireInvoiceOwnership, invoiceController.getInvoicePDFDownloadUrl);
+router.get("/order/:orderId/pdf-download-url", invoiceController.getInvoicePDFDownloadUrlByOrder);
 
 // Invoice actions
 router.put("/:id/send", requireInvoiceOwnership, invoiceController.sendInvoice);

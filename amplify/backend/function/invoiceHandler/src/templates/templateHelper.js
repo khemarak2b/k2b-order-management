@@ -59,6 +59,7 @@ const renderInvoiceHTML = (invoice, lineItems, companyDetails, billingAddress, s
       otherCharges: formatCurrency(invoice.other_charges || invoice.otherCharges || 0),
       totalAmount: formatCurrency(invoice.total_amount || invoice.totalAmount || 0),
       amountDue: formatCurrency(invoice.amount_due || invoice.amountDue || 0),
+      amountPaid: formatCurrency(invoice.amount_paid || invoice.amountPaid || 0),
     };
 
     // Format line items - handle both camelCase and snake_case field names

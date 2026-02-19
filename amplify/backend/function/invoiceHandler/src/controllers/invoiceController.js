@@ -2,7 +2,7 @@ const invoiceDb = require("../db/invoices");
 const { formatResponse } = require("/opt/nodejs/utils/responseFormatter");
 const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { generateInvoicePDF } = require("../utils/pdfGenerator");
-const { uploadInvoicePDF } = require("../utils/s3Storage");
+const { uploadInvoicePDF, getInvoicePDFPresignedUrl } = require("../utils/s3Storage");
 
 /**
  * Get all invoices (admin only)
@@ -134,9 +134,6 @@ exports.generateInvoiceFromOrder = async (req, res) => {
 
     // Check if invoice already exists for this order
     const existingInvoice = await invoiceDb.getInvoiceByOrder(req.pool, orderId);
-    if (existingInvoice) {
-      return res.status(409).json({ error: "Invoice already exists for this order" });
-    }
 
     // Extract GST from prices (GST inclusive model)
     // GST Rate = 10%, so to extract: gst = total / 11 (since total = base * 1.1)
@@ -200,6 +197,7 @@ exports.generateInvoiceFromOrder = async (req, res) => {
         order_number: order.order_number,
       },
       company_details: companyDetails || null,
+      created_by: req.user?.sub,
       metadata: {
         order_id: orderId,
         generated_at: new Date().toISOString(),
@@ -207,9 +205,33 @@ exports.generateInvoiceFromOrder = async (req, res) => {
       line_items: lineItems,
     };
 
-    // Create invoice with line items
-    const result = await invoiceDb.createInvoice(req.pool, invoiceData);
-    const createdInvoice = result.invoice;
+    // Create or reuse invoice
+    let createdInvoice;
+    let result;
+    
+    if (existingInvoice) {
+      console.log("[generateInvoiceFromOrder] Regenerating invoice for order:", orderId);
+      // Update existing invoice with new data
+      createdInvoice = await invoiceDb.updateInvoice(req.pool, {
+        id: existingInvoice.id,
+        subtotal: invoiceData.subtotal,
+        gst_amount: invoiceData.gst_amount,
+        discount_amount: invoiceData.discount_amount,
+        other_charges: invoiceData.other_charges,
+        total_amount: invoiceData.total_amount,
+        amount_due: invoiceData.total_amount,
+        notes: invoiceData.notes,
+        updated_at: new Date().toISOString(),
+      });
+      // Update line items
+      const updatedLineItems = await invoiceDb.updateInvoiceLineItems(req.pool, existingInvoice.id, lineItems);
+      result = { invoice: createdInvoice, line_items: updatedLineItems };
+    } else {
+      console.log("[generateInvoiceFromOrder] Creating new invoice for order:", orderId);
+      // Create new invoice
+      result = await invoiceDb.createInvoice(req.pool, invoiceData);
+      createdInvoice = result.invoice;
+    }
 
     // Generate PDF and upload to S3
     try {
@@ -238,15 +260,17 @@ exports.generateInvoiceFromOrder = async (req, res) => {
         companyDetails,
         createdInvoice.billing_address || order.billing_address,
         createdInvoice.shipping_address || order.shipping_address,
-        companyLogo
+        companyLogo,
       );
 
       const s3Upload = await uploadInvoicePDF(pdfBuffer, createdInvoice.invoice_number);
 
-      // Update invoice with PDF URL
+      // Update invoice with PDF URL and generation timestamp
       const updatedInvoiceData = await invoiceDb.updateInvoice(req.pool, {
         id: createdInvoice.id,
         pdf_url: s3Upload.url,
+        pdf_generated_at: new Date().toISOString(),
+        updated_by: req.user?.sub,
       });
 
       console.log("[generateInvoiceFromOrder] PDF generated and uploaded successfully");
@@ -256,12 +280,12 @@ exports.generateInvoiceFromOrder = async (req, res) => {
         formatResponse({
           invoice: updatedInvoiceData,
           line_items: result.line_items,
-        })
+        }),
       );
     } catch (pdfError) {
       console.error(
         "[generateInvoiceFromOrder] Warning: PDF generation failed, but invoice was created:",
-        pdfError.message
+        pdfError.message,
       );
       // Return original invoice without PDF URL
       res.status(201).json(formatResponse(result));
@@ -403,6 +427,37 @@ exports.sendInvoice = async (req, res) => {
 };
 
 /**
+ * Get invoice payment history
+ */
+exports.getInvoicePayments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 50, offset = 0 } = req.query;
+
+    if (!id) {
+      return res.status(400).json({ error: "Invoice ID is required" });
+    }
+
+    // Verify invoice exists
+    const invoice = await invoiceDb.getInvoice(req.pool, id);
+    if (!invoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+
+    // Get payment history
+    const payments = await invoiceDb.getInvoicePayments(req.pool, id, {
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+    });
+
+    res.json(formatResponse(payments || []));
+  } catch (error) {
+    console.error("[getInvoicePayments] Error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/**
  * Record payment against invoice
  */
 exports.recordPayment = async (req, res) => {
@@ -421,11 +476,12 @@ exports.recordPayment = async (req, res) => {
     }
 
     const result = await invoiceDb.recordPayment(req.pool, id, {
-      amount: parseFloat(amount),
-      payment_method,
-      payment_reference,
-      payment_date,
-      notes,
+      amount: parseFloat(amount) || 0,
+      payment_method: payment_method || null,
+      payment_reference: payment_reference || null,
+      payment_date: payment_date || new Date().toISOString().split("T")[0],
+      notes: notes || null,
+      recorded_by: req.user?.sub,
     });
 
     res.json(formatResponse(result));
@@ -482,6 +538,80 @@ exports.markInvoiceAsPaid = async (req, res) => {
     res.json(formatResponse(updatedInvoice));
   } catch (error) {
     console.error("[markInvoiceAsPaid] Error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/**
+ * Get presigned URL for invoice PDF download by invoice ID
+ */
+exports.getInvoicePDFDownloadUrl = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: "Invoice ID is required" });
+    }
+
+    const invoice = await invoiceDb.getInvoice(req.pool, id);
+
+    if (!invoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+
+    if (!invoice.invoice_number) {
+      return res.status(400).json({ error: "Invoice PDF not yet generated" });
+    }
+
+    const bucketName = process.env.INVOICE_BUCKET_NAME;
+    const presignedUrl = await getInvoicePDFPresignedUrl(bucketName, invoice.invoice_number, 3600);
+
+    res.json(
+      formatResponse({
+        pdf_url: presignedUrl,
+        invoice_number: invoice.invoice_number,
+        expires_in: 3600,
+      }),
+    );
+  } catch (error) {
+    console.error("[getInvoicePDFDownloadUrl] Error:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+/**
+ * Get presigned URL for invoice PDF download by order ID
+ */
+exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    if (!orderId) {
+      return res.status(400).json({ error: "Order ID is required" });
+    }
+
+    const invoice = await invoiceDb.getInvoiceByOrder(req.pool, orderId);
+
+    if (!invoice) {
+      return res.status(404).json({ error: "Invoice not found for this order" });
+    }
+
+    if (!invoice.invoice_number) {
+      return res.status(400).json({ error: "Invoice PDF not yet generated" });
+    }
+
+    const bucketName = process.env.INVOICE_BUCKET_NAME;
+    const presignedUrl = await getInvoicePDFPresignedUrl(bucketName, invoice.invoice_number, 3600);
+
+    res.json(
+      formatResponse({
+        pdf_url: presignedUrl,
+        invoice_number: invoice.invoice_number,
+        expires_in: 3600,
+      }),
+    );
+  } catch (error) {
+    console.error("[getInvoicePDFDownloadUrlByOrder] Error:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -98,7 +98,7 @@
             "INVOICE_BUCKET_NAME": {
               "Ref": "invoiceBucketName"
             },
-            "BYPASS_AUTH": "true"
+            "BYPASS_AUTH": "false"
           }
         },
         "Role": {

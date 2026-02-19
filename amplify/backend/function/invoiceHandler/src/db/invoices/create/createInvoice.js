@@ -43,11 +43,11 @@ const createInvoice = async (pool, data) => {
         amount_due, currency_code, status, payment_status,
         billing_address, shipping_address, po_number, payment_terms_days,
         payment_method, notes, terms_and_conditions,
-        customer_details, company_details, metadata
+        customer_details, company_details, metadata, created_by
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
         $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,
-        $22, $23, $24
+        $22, $23, $24, $25
       )
       RETURNING *
     `;
@@ -77,6 +77,7 @@ const createInvoice = async (pool, data) => {
       customer_details ? JSON.stringify(customer_details) : null,
       company_details ? JSON.stringify(company_details) : null,
       metadata ? JSON.stringify(metadata) : null,
+      data.created_by || null,
     ]);
 
     const invoice = result.rows[0];

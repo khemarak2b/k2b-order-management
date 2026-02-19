@@ -7,8 +7,20 @@ const recordPayment = async (pool, invoiceId, paymentData) => {
 
     await client.query("BEGIN");
 
-    // Insert payment record
-    const paymentQuery = `
+    // Step 1: Get invoice details including order_id
+    const invoiceQuery = `SELECT * FROM ${schema}.invoices WHERE id = $1`;
+    const invoiceResult = await client.query(invoiceQuery, [invoiceId]);
+
+    if (invoiceResult.rows.length === 0) {
+      throw new Error("Invoice not found");
+    }
+
+    const invoice = invoiceResult.rows[0];
+    const { order_id, total_amount } = invoice;
+    const totalAmountDecimal = parseFloat(total_amount);
+
+    // Step 2: Insert into invoice_payments (detailed ledger/audit trail)
+    const insertPaymentQuery = `
       INSERT INTO ${schema}.invoice_payments (
         invoice_id, amount, payment_method, payment_reference,
         payment_date, status, notes, recorded_by
@@ -16,9 +28,9 @@ const recordPayment = async (pool, invoiceId, paymentData) => {
       RETURNING *
     `;
 
-    const paymentResult = await client.query(paymentQuery, [
+    const paymentResult = await client.query(insertPaymentQuery, [
       invoiceId,
-      amount,
+      parseFloat(amount),
       payment_method || null,
       payment_reference || null,
       payment_date || new Date().toISOString().split("T")[0],
@@ -27,34 +39,66 @@ const recordPayment = async (pool, invoiceId, paymentData) => {
       recorded_by || null,
     ]);
 
-    const payment = paymentResult.rows[0];
+    const invoicePayment = paymentResult.rows[0];
 
-    // Update invoice amount_paid and payment_status
-    const invoiceQuery = `
+    // Step 3: Calculate total payments for this invoice
+    const sumPaymentsQuery = `
+      SELECT COALESCE(SUM(amount)::DECIMAL, 0::DECIMAL) as total_paid
+      FROM ${schema}.invoice_payments
+      WHERE invoice_id = $1 AND status = 'completed'
+    `;
+
+    const sumResult = await client.query(sumPaymentsQuery, [invoiceId]);
+    const totalPaid = parseFloat(sumResult.rows[0].total_paid);
+
+    // Step 4: Update invoice payment fields
+    const updateInvoiceQuery = `
       UPDATE ${schema}.invoices
       SET 
-        amount_paid = amount_paid + $1,
-        amount_due = total_amount - (amount_paid + $1),
+        amount_paid = $1::DECIMAL,
+        amount_due = $2::DECIMAL,
         payment_status = CASE
-          WHEN (amount_paid + $1) >= total_amount THEN 'paid'
-          WHEN (amount_paid + $1) > 0 THEN 'partially_paid'
+          WHEN $1::DECIMAL >= $3::DECIMAL THEN 'paid'
+          WHEN $1::DECIMAL > 0 THEN 'partially_paid'
           ELSE 'unpaid'
-        END
-      WHERE id = $2
+        END,
+        paid_at = CASE
+          WHEN $1::DECIMAL >= $3::DECIMAL THEN NOW()
+          ELSE paid_at
+        END,
+        updated_by = $5,
+        updated_at = NOW()
+      WHERE id = $4
       RETURNING *
     `;
 
-    const invoiceResult = await client.query(invoiceQuery, [amount, invoiceId]);
+    const updatedInvoiceResult = await client.query(updateInvoiceQuery, [
+      totalPaid,
+      Math.max(0, totalAmountDecimal - totalPaid),
+      totalAmountDecimal,
+      invoiceId,
+      recorded_by || null,
+    ]);
 
-    if (invoiceResult.rows.length === 0) {
-      throw new Error("Invoice not found");
+    const updatedInvoice = updatedInvoiceResult.rows[0];
+
+    // Step 5: Update order's payment record status if fully paid
+    if (totalPaid >= totalAmountDecimal) {
+      const updatePaymentQuery = `
+        UPDATE ${schema}.payments
+        SET status = 'completed', updated_at = NOW()
+        WHERE order_id = $1
+        RETURNING *
+      `;
+
+      await client.query(updatePaymentQuery, [order_id]);
     }
 
     await client.query("COMMIT");
 
     return {
-      payment,
-      invoice: invoiceResult.rows[0],
+      invoicePayment,
+      invoice: updatedInvoice,
     };
   } catch (err) {
     await client.query("ROLLBACK");
