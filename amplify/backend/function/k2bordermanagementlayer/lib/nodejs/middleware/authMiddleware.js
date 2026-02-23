@@ -4,6 +4,7 @@
  */
 
 const { getUserIdByCognitoSub } = require("../queries/users");
+const { getAdminUserByCognitoSub } = require("../queries/admin");
 
 const authMiddleware = async (req, res, next) => {
   const requestId = req.get("x-amzn-trace-id") || "unknown";
@@ -29,8 +30,15 @@ const authMiddleware = async (req, res, next) => {
 
     // Look up database user ID from Cognito sub
     let userId;
+    let isAdmin = false;
     try {
       userId = await getUserIdByCognitoSub(req.pool, userSub);
+      
+      // Check if user is an admin
+      const adminUser = await getAdminUserByCognitoSub(req.pool, userSub);
+      if (adminUser) {
+        isAdmin = true;
+      }
     } catch (error) {
       console.warn(`[${requestId}] User lookup failed:`, error.message);
       return res.status(401).json({ error: "User not found" });
@@ -41,6 +49,7 @@ const authMiddleware = async (req, res, next) => {
       sub: userSub,
       id: userId,
       cognitoAuthProvider,
+      isAdmin,
     };
 
     next();
