@@ -205,26 +205,76 @@ exports.generateInvoiceFromOrder = async (req, res) => {
       line_items: lineItems,
     };
 
+    // Preserve manually-added line items (additional charges) when regenerating
+    const existingManualLineItems = existingInvoice?.line_items
+      ? existingInvoice.line_items.filter((item) => {
+          const metadata = item.metadata || {};
+          return metadata.type === "additional_charge" || metadata.is_manual === true;
+        })
+      : [];
+
+    const normalizedManualLineItems = existingManualLineItems.map((item) => ({
+      order_item_id: item.order_item_id || null,
+      product_id: item.product_id || null,
+      product_name: item.product_name,
+      product_sku: item.product_sku || null,
+      variant_id: item.variant_id || null,
+      variant_name: item.variant_name || null,
+      quantity: item.quantity,
+      unit_price: parseFloat(item.unit_price) || 0,
+      line_total: parseFloat(item.line_total) || 0,
+      gst_amount: parseFloat(item.gst_amount) || 0,
+      gst_included: item.gst_included ?? true,
+      discount_percent: item.discount_percent || null,
+      discount_amount: parseFloat(item.discount_amount) || 0,
+      description: item.description || null,
+      notes: item.notes || null,
+      metadata: item.metadata || { type: "additional_charge", is_manual: true },
+    }));
+
+    const allLineItems = [...lineItems, ...normalizedManualLineItems];
+
+    const additionalSubtotalExclusive = normalizedManualLineItems.reduce((sum, item) => {
+      const lineTotal = parseFloat(item.line_total) || 0;
+      const isGstIncluded = item.gst_included !== false;
+      return sum + (isGstIncluded ? lineTotal / EXTRACTION_DIVISOR : lineTotal);
+    }, 0);
+
+    const additionalGstAmount = normalizedManualLineItems.reduce((sum, item) => {
+      if (item.gst_amount !== null && item.gst_amount !== undefined) {
+        return sum + (parseFloat(item.gst_amount) || 0);
+      }
+      const lineTotal = parseFloat(item.line_total) || 0;
+      const isGstIncluded = item.gst_included !== false;
+      return sum + (isGstIncluded ? lineTotal - lineTotal / EXTRACTION_DIVISOR : lineTotal * GST_RATE);
+    }, 0);
+
+    const additionalTotal = normalizedManualLineItems.reduce((sum, item) => sum + (parseFloat(item.line_total) || 0), 0);
+
     // Create or reuse invoice
     let createdInvoice;
     let result;
     
     if (existingInvoice) {
       console.log("[generateInvoiceFromOrder] Regenerating invoice for order:", orderId);
+      const existingAmountPaid = parseFloat(existingInvoice.amount_paid) || 0;
+      const recalculatedTotalAmount = parseFloat((order.total_amount + additionalTotal).toFixed(2));
+      const recalculatedAmountDue = Math.max(0, parseFloat((recalculatedTotalAmount - existingAmountPaid).toFixed(2)));
+
       // Update existing invoice with new data
       createdInvoice = await invoiceDb.updateInvoice(req.pool, {
         id: existingInvoice.id,
-        subtotal: invoiceData.subtotal,
-        gst_amount: invoiceData.gst_amount,
+        subtotal: parseFloat((invoiceData.subtotal + additionalSubtotalExclusive).toFixed(2)),
+        gst_amount: parseFloat((invoiceData.gst_amount + additionalGstAmount).toFixed(2)),
         discount_amount: invoiceData.discount_amount,
         other_charges: invoiceData.other_charges,
-        total_amount: invoiceData.total_amount,
-        amount_due: invoiceData.total_amount,
+        total_amount: recalculatedTotalAmount,
+        amount_due: recalculatedAmountDue,
         notes: invoiceData.notes,
         updated_at: new Date().toISOString(),
       });
       // Update line items
-      const updatedLineItems = await invoiceDb.updateInvoiceLineItems(req.pool, existingInvoice.id, lineItems);
+      const updatedLineItems = await invoiceDb.updateInvoiceLineItems(req.pool, existingInvoice.id, allLineItems);
       result = { invoice: createdInvoice, line_items: updatedLineItems };
     } else {
       console.log("[generateInvoiceFromOrder] Creating new invoice for order:", orderId);
