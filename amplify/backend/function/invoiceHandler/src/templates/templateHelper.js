@@ -79,10 +79,14 @@ const renderInvoiceHTML = (invoice, lineItems, companyDetails, billingAddress, s
       billingAddress,
       shippingAddress,
       companyLogo,
-      currentDate: new Date().toLocaleDateString("en-AU", {
+      currentDate: new Date().toLocaleString("en-AU", {
         year: "numeric",
         month: "long",
         day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZoneName: "longOffset",
+        timeZone: "Australia/Sydney",
       }),
     };
 

@@ -327,6 +327,114 @@ const fetchOrderWithItems = async (pool, orderId) => {
   }
 };
 
+const GST_RATE = 0.1;
+const GST_EXTRACTION_DIVISOR = 1 + GST_RATE;
+
+const roundMoney = (value) => parseFloat((Number(value) || 0).toFixed(2));
+
+const normalizeAdditionalChargeLineItem = (item, index) => {
+  const lineItemNumber = index + 1;
+  const description = item.description || item.product_name || item.productName || item.name;
+  const quantity = parseInt(item.quantity, 10);
+  const unitPrice = parseFloat(item.unit_price ?? item.unitPrice);
+  const gstIncluded = item.gst_included ?? item.gstIncluded ?? true;
+
+  if (!description || typeof description !== "string") {
+    throw new Error(`Invalid additional charge at index ${lineItemNumber}: description is required`);
+  }
+
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    throw new Error(`Invalid additional charge at index ${lineItemNumber}: quantity must be a positive integer`);
+  }
+
+  if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+    throw new Error(`Invalid additional charge at index ${lineItemNumber}: unitPrice must be a non-negative number`);
+  }
+
+  const lineTotal = roundMoney(quantity * unitPrice);
+  const subtotalExclusive = gstIncluded ? roundMoney(lineTotal / GST_EXTRACTION_DIVISOR) : lineTotal;
+  const gstAmount = gstIncluded ? roundMoney(lineTotal - subtotalExclusive) : roundMoney(lineTotal * GST_RATE);
+
+  return {
+    lineItem: {
+      order_item_id: null,
+      product_id: null,
+      product_name: description,
+      product_sku: null,
+      variant_id: null,
+      variant_name: null,
+      quantity,
+      unit_price: unitPrice,
+      line_total: lineTotal,
+      gst_amount: gstAmount,
+      gst_included: !!gstIncluded,
+      discount_percent: null,
+      discount_amount: 0,
+      description,
+      notes: item.notes || null,
+      metadata: {
+        ...(item.metadata || {}),
+        type: "additional_charge",
+        is_manual: true,
+      },
+    },
+    subtotalExclusive,
+    gstAmount,
+    lineTotal,
+  };
+};
+
+const regenerateInvoicePdf = async (pool, invoiceId, updatedBy) => {
+  const invoice = await invoiceDb.getInvoice(pool, invoiceId);
+  if (!invoice || !invoice.invoice_number) {
+    return;
+  }
+
+  const companyDetails = invoice.company_details || {
+    name: process.env.COMPANY_NAME,
+    abn: process.env.COMPANY_ABN,
+    address: process.env.COMPANY_ADDRESS,
+    email: process.env.COMPANY_EMAIL,
+    phone: process.env.COMPANY_PHONE,
+    website: process.env.COMPANY_WEBSITE,
+  };
+
+  const order = invoice.order_id ? await fetchOrderWithItems(pool, invoice.order_id) : null;
+
+  let companyLogo = null;
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const logoPath = path.join(__dirname, "../templates/invoice-logo.png");
+    if (fs.existsSync(logoPath)) {
+      const logoBuffer = fs.readFileSync(logoPath);
+      companyLogo = `data:image/png;base64,${logoBuffer.toString("base64")}`;
+    }
+  } catch (error) {
+    console.warn("[regenerateInvoicePdf] Could not load logo:", error.message);
+  }
+
+  const pdfBuffer = await generateInvoicePDF(
+    {
+      ...invoice,
+      orderNumber: order?.order_number,
+    },
+    invoice.line_items || [],
+    companyDetails,
+    invoice.billing_address || order?.billing_address || {},
+    invoice.shipping_address || order?.shipping_address || {},
+    companyLogo,
+  );
+
+  const s3Upload = await uploadInvoicePDF(pdfBuffer, invoice.invoice_number);
+  await invoiceDb.updateInvoice(pool, {
+    id: invoiceId,
+    pdf_url: s3Upload.url,
+    pdf_generated_at: new Date().toISOString(),
+    updated_by: updatedBy || null,
+  });
+};
+
 /**
  * Update invoice
  */
@@ -340,11 +448,69 @@ exports.updateInvoice = async (req, res) => {
       return res.status(400).json({ error: "Invoice ID is required" });
     }
 
-    const dbData = toSnakeCase({ ...req.body, id });
-    const invoice = await invoiceDb.updateInvoice(req.pool, dbData);
+    const existingInvoice = await invoiceDb.getInvoice(req.pool, id);
+    if (!existingInvoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+
+    const { lineItems, line_items, additionalLineItems, additional_line_items, ...invoicePayload } = req.body || {};
+
+    const requestedAdditions = Array.isArray(additionalLineItems)
+      ? additionalLineItems
+      : Array.isArray(additional_line_items)
+        ? additional_line_items
+        : Array.isArray(lineItems)
+          ? lineItems.filter((item) => !item?.id)
+          : Array.isArray(line_items)
+            ? line_items.filter((item) => !item?.id)
+            : [];
+
+    let recalculatedFields = {};
+
+    if (requestedAdditions.length > 0) {
+      const currentLineItems = Array.isArray(existingInvoice.line_items) ? existingInvoice.line_items : [];
+      const lineItemsToAppend = [];
+
+      let subtotalDelta = 0;
+      let gstDelta = 0;
+      let totalDelta = 0;
+
+      requestedAdditions.forEach((item, index) => {
+        const normalized = normalizeAdditionalChargeLineItem(item, index);
+        lineItemsToAppend.push(normalized.lineItem);
+        subtotalDelta += normalized.subtotalExclusive;
+        gstDelta += normalized.gstAmount;
+        totalDelta += normalized.lineTotal;
+      });
+
+      await invoiceDb.updateInvoiceLineItems(req.pool, id, [...currentLineItems, ...lineItemsToAppend]);
+
+      recalculatedFields = {
+        subtotal: roundMoney((parseFloat(existingInvoice.subtotal) || 0) + subtotalDelta),
+        gst_amount: roundMoney((parseFloat(existingInvoice.gst_amount) || 0) + gstDelta),
+        total_amount: roundMoney((parseFloat(existingInvoice.total_amount) || 0) + totalDelta),
+        amount_due: roundMoney((parseFloat(existingInvoice.amount_due) || 0) + totalDelta),
+      };
+    }
+
+    const dbData = toSnakeCase({ ...invoicePayload, ...recalculatedFields, id });
+    await invoiceDb.updateInvoice(req.pool, dbData);
+
+    if (requestedAdditions.length > 0) {
+      try {
+        await regenerateInvoicePdf(req.pool, id, req.user?.sub);
+      } catch (pdfError) {
+        console.warn("[updateInvoice] Failed to regenerate PDF after adding charges:", pdfError.message);
+      }
+    }
+
+    const invoice = await invoiceDb.getInvoice(req.pool, id);
 
     res.json(formatResponse(invoice));
   } catch (error) {
+    if (error.message?.includes("Invalid additional charge")) {
+      return res.status(400).json({ error: error.message });
+    }
     console.error("[updateInvoice] Error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
   }
