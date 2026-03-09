@@ -17,8 +17,11 @@
     "gstAmount": "100.00",
     "discountAmount": "50.00",
     "otherCharges": "25.00",
-    "totalAmount": "1075.00",
-    "amountDue": "1075.00",
+    "totalAmount": "1152.00",
+    "amount_paid": "200.00",
+    "amountPaid": "200.00",
+    "amount_due": "952.00",
+    "amountDue": "952.00",
     "notes": "Thank you for your business. Please contact us if you have any questions."
   },
   "billingAddress": {
@@ -51,7 +54,56 @@
       "quantity": "1",
       "unitPrice": "200.00",
       "lineTotal": "200.00"
+    },
+    {
+      "productName": "Freight Surcharge",
+      "quantity": "1",
+      "unitPrice": "55.00",
+      "lineTotal": "55.00",
+      "metadata": {
+        "type": "additional_charge",
+        "is_manual": true
+      }
+    },
+    {
+      "productName": "Handling Fee",
+      "quantity": "1",
+      "unitPrice": "22.00",
+      "lineTotal": "22.00",
+      "metadata": {
+        "type": "additional_charge",
+        "is_manual": true
+      }
     }
   ],
+  "productLineItems": [
+    {
+      "productName": "Professional Consulting Services",
+      "quantity": "10",
+      "unitPrice": "80.00",
+      "lineTotal": "800.00"
+    },
+    {
+      "productName": "Software License (Annual)",
+      "quantity": "1",
+      "unitPrice": "200.00",
+      "lineTotal": "200.00"
+    }
+  ],
+  "additionalCharges": [
+    {
+      "productName": "Freight Surcharge",
+      "quantity": "1",
+      "unitPrice": "55.00",
+      "lineTotal": "55.00"
+    },
+    {
+      "productName": "Handling Fee",
+      "quantity": "1",
+      "unitPrice": "22.00",
+      "lineTotal": "22.00"
+    }
+  ],
+  "additionalChargesTotal": "77.00",
   "currentDate": "12/02/2026"
 }

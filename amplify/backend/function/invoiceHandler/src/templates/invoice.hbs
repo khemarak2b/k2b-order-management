@@ -215,6 +215,11 @@
         color: #214a36;
       }
 
+      .additional-charges-table thead {
+        background: #f1f3f5;
+        color: #636e72;
+      }
+
       /* Totals Section */
       .totals-section {
         display: flex;
@@ -481,7 +486,7 @@
               </tr>
             </thead>
             <tbody>
-              {{#each lineItems}}
+              {{#each productLineItems}}
                 <tr>
                   <td>{{this.productName}}</td>
                   <td style="text-align: center;">{{this.quantity}}</td>
@@ -492,6 +497,31 @@
             </tbody>
           </table>
         </div>
+
+        {{#if additionalCharges.length}}
+          <div class="items-section">
+            <table class="additional-charges-table">
+              <thead>
+                <tr>
+                  <th>Additional Charges</th>
+                  <th style="text-align: center;">Quantity</th>
+                  <th class="text-right">Unit Price</th>
+                  <th class="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each additionalCharges}}
+                  <tr>
+                    <td>{{this.productName}}</td>
+                    <td style="text-align: center;">{{this.quantity}}</td>
+                    <td class="text-right">${{this.unitPrice}}</td>
+                    <td>${{this.lineTotal}}</td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{/if}}
 
         <!-- Totals -->
         <div class="totals-section">
@@ -514,6 +544,12 @@
               <div class="totals-row shipping">
                 <strong>Shipping</strong>
                 <span>${{invoice.otherCharges}}</span>
+              </div>
+            {{/if}}
+            {{#if additionalCharges.length}}
+              <div class="totals-row shipping">
+                <strong>Additional Charges</strong>
+                <span>${{additionalChargesTotal}}</span>
               </div>
             {{/if}}
             <div class="totals-divider"></div>

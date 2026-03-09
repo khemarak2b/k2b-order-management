@@ -62,6 +62,11 @@ const renderInvoiceHTML = (invoice, lineItems, companyDetails, billingAddress, s
       amountPaid: formatCurrency(invoice.amount_paid || invoice.amountPaid || 0),
     };
 
+    const isAdditionalCharge = (item) => {
+      const metadata = item.metadata || {};
+      return metadata.type === "additional_charge" || metadata.is_manual === true;
+    };
+
     // Format line items - handle both camelCase and snake_case field names
     const formattedLineItems = lineItems.map((item) => ({
       ...item,
@@ -71,10 +76,19 @@ const renderInvoiceHTML = (invoice, lineItems, companyDetails, billingAddress, s
       lineTotal: formatCurrency(item.line_total || item.lineTotal || 0),
     }));
 
+    const productLineItems = formattedLineItems.filter((item) => !isAdditionalCharge(item));
+    const additionalCharges = formattedLineItems.filter((item) => isAdditionalCharge(item));
+    const additionalChargesTotal = formatCurrency(
+      additionalCharges.reduce((sum, item) => sum + (parseFloat(item.line_total || item.lineTotal) || 0), 0),
+    );
+
     // Prepare data for rendering
     const data = {
       invoice: formattedInvoice,
       lineItems: formattedLineItems,
+      productLineItems,
+      additionalCharges,
+      additionalChargesTotal,
       companyDetails,
       billingAddress,
       shippingAddress,
