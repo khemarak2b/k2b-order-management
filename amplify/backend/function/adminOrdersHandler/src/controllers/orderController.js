@@ -161,7 +161,7 @@ exports.updateOrder = async (req, res) => {
   try {
     console.log("[updateOrder] Request body:", JSON.stringify(req.body));
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, trackingUrl } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: "Order ID is required" });
@@ -193,6 +193,15 @@ exports.updateOrder = async (req, res) => {
         return res.status(400).json({
           error: `Cannot transition from ${currentOrder.status} to ${status}`,
         });
+      }
+    }
+
+    // Validate tracking URL if provided
+    if (trackingUrl) {
+      try {
+        new URL(trackingUrl);
+      } catch {
+        return res.status(400).json({ error: "Invalid tracking URL format" });
       }
     }
 
