@@ -258,7 +258,7 @@ exports.generateInvoiceFromOrder = async (req, res) => {
     if (existingInvoice) {
       console.log("[generateInvoiceFromOrder] Regenerating invoice for order:", orderId);
       const existingAmountPaid = parseFloat(existingInvoice.amount_paid) || 0;
-      const recalculatedTotalAmount = parseFloat((order.total_amount + additionalTotal).toFixed(2));
+      const recalculatedTotalAmount = parseFloat((parseFloat(order.total_amount) + additionalTotal).toFixed(2));
       const recalculatedAmountDue = Math.max(0, parseFloat((recalculatedTotalAmount - existingAmountPaid).toFixed(2)));
 
       // Update existing invoice with new data
