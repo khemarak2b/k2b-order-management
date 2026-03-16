@@ -216,18 +216,28 @@ exports.updateOrder = async (req, res) => {
     // Send notification email to customer only if status has changed
     try {
       if (status && status !== currentOrder.status) {
-        await sendNotification({
-          to: currentOrder.customer_email,
-          subject: `Order Update - Order #${currentOrder.order_number}`,
-          template: "order-status-updated",
-          data: {
-            customerName: currentOrder.customer_name,
-            orderNumber: currentOrder.order_number,
-            newStatus: status,
-            trackingUrl: trackingUrl || currentOrder.tracking_url,
-          },
-        });
-        console.log("[updateOrder] Notification sent to customer:", currentOrder.customer_email);
+        // Fetch customer email and name from users table
+        const userResult = await req.pool.query(
+          `SELECT email, first_name, last_name FROM ${process.env.ENVIRONMENT || "dev"}.users WHERE id = $1`,
+          [currentOrder.user_id]
+        );
+        
+        if (userResult.rows.length > 0) {
+          const user = userResult.rows[0];
+          const customerName = `${user.first_name} ${user.last_name}`.trim();
+          await sendNotification({
+            to: user.email,
+            subject: `Order Update - Order #${currentOrder.order_number}`,
+            template: "order-status-updated",
+            data: {
+              customerName: customerName,
+              orderNumber: currentOrder.order_number,
+              newStatus: status,
+              trackingUrl: trackingUrl || currentOrder.tracking_url,
+            },
+          });
+          console.log("[updateOrder] Notification sent to customer:", user.email);
+        }
       }
     } catch (notificationError) {
       console.error("[updateOrder] Failed to send notification:", notificationError.message);
