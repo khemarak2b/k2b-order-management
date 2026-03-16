@@ -129,7 +129,7 @@ exports.getAllOrders = async (req, res) => {
           offset: result.offset,
           hasMore,
         },
-      })
+      }),
     );
   } catch (error) {
     console.error(error);
@@ -219,9 +219,9 @@ exports.updateOrder = async (req, res) => {
         // Fetch customer email and name from users table
         const userResult = await req.pool.query(
           `SELECT email, first_name, last_name FROM ${process.env.ENVIRONMENT || "dev"}.users WHERE id = $1`,
-          [currentOrder.user_id]
+          [currentOrder.user_id],
         );
-        
+
         if (userResult.rows.length > 0) {
           const user = userResult.rows[0];
           const customerName = `${user.first_name} ${user.last_name}`.trim();
@@ -231,6 +231,7 @@ exports.updateOrder = async (req, res) => {
             template: "order-status-updated",
             data: {
               customerName: customerName,
+              orderId: currentOrder.id,
               orderNumber: currentOrder.order_number,
               newStatus: status,
               trackingUrl: trackingUrl || currentOrder.tracking_url,
