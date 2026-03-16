@@ -2,7 +2,7 @@ const orderDb = require("../db/orders");
 const { formatResponse } = require("/opt/nodejs/utils/responseFormatter");
 const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { generateFormattedOrderId } = require("../utils/idGenerator");
-const { sendNotification } = require("../utils/notificationService");
+const { sendNotification } = require("/opt/nodejs/utils/notificationService");
 
 exports.getOrder = async (req, res) => {
   try {

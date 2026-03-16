@@ -64,6 +64,7 @@ K2B_NOTIFICATION_MANAGEMENT="k2b-notification-management"
 aws s3api get-object --bucket $BUCKET_NAME \
 --key "${DEPLOYMENT_ENV}/${K2B_NOTIFICATION_MANAGEMENT}/${K2B_NOTIFICATION_MANAGEMENT}-aws-exports.js" "${K2B_NOTIFICATION_MANAGEMENT}-aws-exports.js"
 cp "${K2B_NOTIFICATION_MANAGEMENT}-aws-exports.js" ./amplify/backend/function/ordersHandler/src
+cp "${K2B_NOTIFICATION_MANAGEMENT}-aws-exports.js" ./amplify/backend/function/k2bordermanagementlayer/nodejs
 
 
 # Try to download team-provider-info.json from S3
