@@ -1,6 +1,7 @@
 const orderDb = require("../db/orders");
 const { formatResponse } = require("/opt/nodejs/utils/responseFormatter");
 const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
+const { sendNotification } = require("/opt/nodejs/utils/notificationService");
 
 exports.getOrder = async (req, res) => {
   try {
@@ -167,19 +168,21 @@ exports.updateOrder = async (req, res) => {
       return res.status(400).json({ error: "Order ID is required" });
     }
 
-    // Validate status transition
-    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled", "refunded"];
-    if (status && !validStatuses.includes(status)) {
-      return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
-    }
-
-    // Get current order to validate transition
+    // Get current order for transition validation and later comparison
+    let currentOrder = null;
     if (status) {
-      const currentOrder = await orderDb.getOrder(req.pool, id);
+      currentOrder = await orderDb.getOrder(req.pool, id);
       if (!currentOrder) {
         return res.status(404).json({ error: "Order not found" });
       }
 
+      // Validate status
+      const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled", "refunded"];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
+      }
+
+      // Validate transition
       const validTransitions = {
         pending: ["processing", "cancelled"],
         processing: ["shipped", "cancelled"],
@@ -209,6 +212,28 @@ exports.updateOrder = async (req, res) => {
     console.log("[updateOrder] Updating Order with data:", JSON.stringify(dbData));
     const order = await orderDb.updateOrder(req.pool, dbData);
     console.log("[updateOrder] Order updated successfully:", JSON.stringify(order));
+
+    // Send notification email to customer only if status has changed
+    try {
+      if (status && status !== currentOrder.status) {
+        await sendNotification({
+          to: currentOrder.customer_email,
+          subject: `Order Update - Order #${currentOrder.order_number}`,
+          template: "order-status-updated",
+          data: {
+            customerName: currentOrder.customer_name,
+            orderNumber: currentOrder.order_number,
+            newStatus: status,
+            trackingUrl: trackingUrl || currentOrder.tracking_url,
+          },
+        });
+        console.log("[updateOrder] Notification sent to customer:", currentOrder.customer_email);
+      }
+    } catch (notificationError) {
+      console.error("[updateOrder] Failed to send notification:", notificationError.message);
+      // Don't fail the update if notification fails
+    }
+
     res.status(200).json(formatResponse(order));
   } catch (error) {
     console.error("[updateOrder] Error:", error.message, error.stack);
