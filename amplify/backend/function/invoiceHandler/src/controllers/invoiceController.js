@@ -45,7 +45,9 @@ exports.getUserInvoices = async (req, res) => {
       offset: parseInt(offset),
     });
 
-    res.json(formatResponse(invoices || []));
+    const visibleInvoices = (invoices || []).filter((invoice) => isInvoiceVisibleToCustomer(invoice));
+
+    res.json(formatResponse(visibleInvoices));
   } catch (error) {
     console.error("[getUserInvoices] Error:", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -65,7 +67,7 @@ exports.getInvoice = async (req, res) => {
 
     const invoice = await invoiceDb.getInvoice(req.pool, id);
 
-    if (!invoice) {
+    if (!invoice || shouldHideInvoiceFromRequester(req, invoice)) {
       return res.status(404).json({ error: "Invoice not found" });
     }
 
@@ -89,7 +91,7 @@ exports.getInvoiceByOrder = async (req, res) => {
 
     const invoice = await invoiceDb.getInvoiceByOrder(req.pool, orderId);
 
-    if (!invoice) {
+    if (!invoice || shouldHideInvoiceFromRequester(req, invoice)) {
       return res.status(404).json({ error: "Invoice not found for this order" });
     }
 
@@ -606,7 +608,7 @@ exports.deleteInvoice = async (req, res) => {
     }
 
     const invoice = await invoiceDb.getInvoice(req.pool, id);
-    if (!invoice) {
+    if (!invoice || shouldHideInvoiceFromRequester(req, invoice)) {
       return res.status(404).json({ error: "Invoice not found" });
     }
 
@@ -632,7 +634,7 @@ exports.getInvoicePayments = async (req, res) => {
 
     // Verify invoice exists
     const invoice = await invoiceDb.getInvoice(req.pool, id);
-    if (!invoice) {
+    if (!invoice || shouldHideInvoiceFromRequester(req, invoice)) {
       return res.status(404).json({ error: "Invoice not found" });
     }
 
@@ -754,7 +756,7 @@ exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
 
     const invoice = await invoiceDb.getInvoiceByOrder(req.pool, orderId);
 
-    if (!invoice) {
+    if (!invoice || shouldHideInvoiceFromRequester(req, invoice)) {
       return res.status(404).json({ error: "Invoice not found for this order" });
     }
 
@@ -777,3 +779,11 @@ exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+function shouldHideInvoiceFromRequester(req, invoice) {
+  return req.isCustomerInvoiceRequest === true && !isInvoiceVisibleToCustomer(invoice);
+}
+
+function isInvoiceVisibleToCustomer(invoice) {
+  return invoice?.status !== "draft";
+}

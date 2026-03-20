@@ -20,6 +20,10 @@ const conditionalAuthMiddleware = (req, res, next) => {
 
 // Apply auth middleware to all routes
 router.use(conditionalAuthMiddleware);
+router.use((req, res, next) => {
+  req.isCustomerInvoiceRequest = true;
+  next();
+});
 
 // Middleware for invoice ownership
 const requireInvoiceOwnership = createOwnershipMiddleware(async (req) => invoiceDb.getInvoice(req.pool, req.params.id));
