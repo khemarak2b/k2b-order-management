@@ -23,18 +23,17 @@ router.use(conditionalAuthMiddleware);
 
 // Middleware for invoice ownership
 const requireInvoiceOwnership = createOwnershipMiddleware(async (req) => invoiceDb.getInvoice(req.pool, req.params.id));
+const requireInvoiceOrderOwnership = createOwnershipMiddleware(
+  async (req) => invoiceDb.getInvoiceByOrder(req.pool, req.params.orderId),
+);
 
 const requireParamUserIdMatch = requireUserIdMatch((req) => req.params.userId);
 
 // User invoice routes
 router.get("/user/:userId", requireParamUserIdMatch, invoiceController.getUserInvoices);
 router.get("/:id", requireInvoiceOwnership, invoiceController.getInvoice);
-router.get("/order/:orderId", invoiceController.getInvoiceByOrder);
+router.get("/order/:orderId", requireInvoiceOrderOwnership, invoiceController.getInvoiceByOrder);
 router.get("/:id/pdf-download-url", requireInvoiceOwnership, invoiceController.getInvoicePDFDownloadUrl);
-router.get("/order/:orderId/pdf-download-url", invoiceController.getInvoicePDFDownloadUrlByOrder);
-
-// Invoice actions
-router.put("/:id/send", requireInvoiceOwnership, invoiceController.sendInvoice);
-router.put("/:id/mark-paid", requireInvoiceOwnership, invoiceController.markInvoiceAsPaid);
+router.get("/order/:orderId/pdf-download-url", requireInvoiceOrderOwnership, invoiceController.getInvoicePDFDownloadUrlByOrder);
 
 module.exports = router;

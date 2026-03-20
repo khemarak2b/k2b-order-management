@@ -1,3 +1,5 @@
+const enrichInvoiceDetails = require("./enrichInvoiceDetails");
+
 const getInvoiceByOrder = async (pool, orderId) => {
   const client = await pool.connect();
   const schema = process.env.ENVIRONMENT || "dev";
@@ -51,11 +53,11 @@ const getInvoiceByOrder = async (pool, orderId) => {
       [invoice.id]
     );
 
-    return {
+    return enrichInvoiceDetails({
       ...invoice,
       line_items: lineItems,
       payments: paymentsResult.rows,
-    };
+    });
   } finally {
     client.release();
   }

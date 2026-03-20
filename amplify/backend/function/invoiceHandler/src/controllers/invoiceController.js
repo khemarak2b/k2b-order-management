@@ -619,30 +619,6 @@ exports.deleteInvoice = async (req, res) => {
 };
 
 /**
- * Send invoice to customer email
- */
-exports.sendInvoice = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({ error: "Invoice ID is required" });
-    }
-
-    // TODO: Implement email sending
-    // 1. Get invoice
-    // 2. Generate PDF if not already generated
-    // 3. Send email with PDF attachment
-    // 4. Update sent_at, sent_count
-
-    res.status(501).json({ error: "Not yet implemented" });
-  } catch (error) {
-    console.error("[sendInvoice] Error:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-/**
  * Get invoice payment history
  */
 exports.getInvoicePayments = async (req, res) => {
@@ -724,36 +700,6 @@ exports.generateBulkInvoices = async (req, res) => {
     res.status(501).json({ error: "Not yet implemented" });
   } catch (error) {
     console.error("[generateBulkInvoices] Error:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-/**
- * Mark invoice as paid
- */
-exports.markInvoiceAsPaid = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({ error: "Invoice ID is required" });
-    }
-
-    const invoice = await invoiceDb.getInvoice(req.pool, id);
-    if (!invoice) {
-      return res.status(404).json({ error: "Invoice not found" });
-    }
-
-    const updatedInvoice = await invoiceDb.updateInvoice(req.pool, {
-      id,
-      payment_status: "paid",
-      status: "paid",
-      paid_at: new Date().toISOString(),
-    });
-
-    res.json(formatResponse(updatedInvoice));
-  } catch (error) {
-    console.error("[markInvoiceAsPaid] Error:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
