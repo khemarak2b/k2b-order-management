@@ -678,6 +678,12 @@ exports.recordPayment = async (req, res) => {
       recorded_by: req.user?.sub,
     });
 
+    try {
+      await regenerateInvoicePdf(req.pool, id, req.user?.sub);
+    } catch (pdfError) {
+      console.warn("[recordPayment] Failed to regenerate PDF after recording payment:", pdfError.message);
+    }
+
     res.json(formatResponse(result));
   } catch (error) {
     console.error("[recordPayment] Error:", error.message, error.stack);

@@ -35,9 +35,9 @@ const requireParamUserIdMatch = requireUserIdMatch((req) => req.params.userId);
 
 // User invoice routes
 router.get("/user/:userId", requireParamUserIdMatch, invoiceController.getUserInvoices);
-router.get("/:id", requireInvoiceOwnership, invoiceController.getInvoice);
 router.get("/order/:orderId", requireInvoiceOrderOwnership, invoiceController.getInvoiceByOrder);
-router.get("/:id/pdf-download-url", requireInvoiceOwnership, invoiceController.getInvoicePDFDownloadUrl);
 router.get("/order/:orderId/pdf-download-url", requireInvoiceOrderOwnership, invoiceController.getInvoicePDFDownloadUrlByOrder);
+router.get("/:id/pdf-download-url", requireInvoiceOwnership, invoiceController.getInvoicePDFDownloadUrl);
+router.get("/:id", requireInvoiceOwnership, invoiceController.getInvoice);
 
 module.exports = router;
