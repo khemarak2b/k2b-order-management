@@ -80,7 +80,7 @@
         },
         "Environment": {
           "Variables": {
-            "ENV": {
+            "ENVIRONMENT": {
               "Ref": "env"
             },
             "REGION": {
