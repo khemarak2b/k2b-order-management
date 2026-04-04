@@ -61,5 +61,43 @@
         "InvoiceBucket": {}
       }
     }
+  },
+  "prod": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-k2bordermanagement-prod-a6194-authRole",
+      "UnauthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bordermanagement-prod-a6194-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bordermanagement-prod-a6194-authRole",
+      "Region": "ap-southeast-2",
+      "DeploymentBucketName": "amplify-k2bordermanagement-prod-a6194-deployment",
+      "UnauthRoleName": "amplify-k2bordermanagement-prod-a6194-unauthRole",
+      "StackName": "amplify-k2bordermanagement-prod-a6194",
+      "StackId": "arn:aws:cloudformation:ap-southeast-2:311840443005:stack/amplify-k2bordermanagement-prod-a6194/a874ea50-2fd5-11f1-950a-0a651412ec77",
+      "AmplifyAppId": "d2l9hfxrb4cgje"
+    },
+    "categories": {
+      "auth": {
+        "k2bordermanagement3df18ae1": {
+          "userPoolId": "ap-southeast-2_kSbHyVKih",
+          "userPoolName": "k2bidpcd7e5d27_userpool_cd7e5d27-prod",
+          "webClientId": "4jqogfi86tj8jg6lb7la4slbql",
+          "nativeClientId": "6gr7ivfd2vtrrkgs2s2jepusl9",
+          "identityPoolId": "ap-southeast-2:bcb63983-051f-4e9c-b272-c79efa1bd33b",
+          "identityPoolName": "k2bidpcd7e5d27_identitypool_cd7e5d27__prod",
+          "allowUnauthenticatedIdentities": false,
+          "authRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bidp-prod-d546d-authRole",
+          "authRoleName": "amplify-k2bidp-prod-d546d-authRole",
+          "unauthRoleArn": "arn:aws:iam::311840443005:role/amplify-k2bidp-prod-d546d-unauthRole",
+          "unauthRoleName": "amplify-k2bidp-prod-d546d-unauthRole"
+        }
+      },
+      "function": {
+        "adminOrdersHandler": {},
+        "cartHandler": {},
+        "invoiceHandler": {},
+        "k2bordermanagementlayer": {},
+        "k2bordermanagementlayer2": {},
+        "ordersHandler": {}
+      }
+    }
   }
 }
