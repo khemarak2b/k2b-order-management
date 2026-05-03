@@ -1,10 +1,18 @@
-const { getOrder, getOrders, getCart, getPayment, getPayments } = require("./read");
+const {
+  getOrder,
+  getOrderByNumber,
+  getOrders,
+  getCart,
+  getPayment,
+  getPayments,
+} = require("./read");
 const { createOrder, createCart, addCartItem, createPayment } = require("./create");
 const { updateOrder, updateCart, updateCartItem, updatePayment } = require("./update");
 const { deleteOrder, deleteCart, deleteCartItem } = require("./delete");
 
 module.exports = {
   getOrder,
+  getOrderByNumber,
   getOrders,
   getCart,
   getPayment,

@@ -3,16 +3,16 @@
     {
       "type": "ProjectLayer",
       "resourceName": "k2bordermanagementlayer",
-      "env": "dev",
       "version": "Always choose latest version",
-      "isLatestVersionSelected": true
+      "isLatestVersionSelected": true,
+      "env": "dev"
     },
     {
       "type": "ProjectLayer",
       "resourceName": "k2bordermanagementlayer2",
-      "env": "dev",
       "version": "Always choose latest version",
-      "isLatestVersionSelected": true
+      "isLatestVersionSelected": true,
+      "env": "dev"
     }
   ]
 }

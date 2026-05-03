@@ -1,4 +1,5 @@
 const enrichInvoiceDetails = require("./enrichInvoiceDetails");
+const getInvoiceChangeLog = require("./getInvoiceChangeLog");
 
 const getInvoiceByOrder = async (pool, orderId) => {
   const client = await pool.connect();
@@ -53,10 +54,13 @@ const getInvoiceByOrder = async (pool, orderId) => {
       [invoice.id]
     );
 
+    const changeLog = await getInvoiceChangeLog(client, orderId, schema);
+
     return enrichInvoiceDetails({
       ...invoice,
       line_items: lineItems,
       payments: paymentsResult.rows,
+      change_log: changeLog,
     });
   } finally {
     client.release();

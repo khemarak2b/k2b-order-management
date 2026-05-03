@@ -11,6 +11,7 @@ const enrichInvoiceDetails = (invoice) => {
   }
 
   const lineItems = Array.isArray(invoice.line_items) ? invoice.line_items : [];
+  const changeLog = Array.isArray(invoice.change_log) ? invoice.change_log : [];
   const additionalCharges = lineItems.filter(isAdditionalCharge);
   const additionalChargesTotal = additionalCharges.reduce((sum, item) => sum + (parseFloat(item.line_total) || 0), 0);
 
@@ -19,6 +20,7 @@ const enrichInvoiceDetails = (invoice) => {
     additional_charges: additionalCharges,
     additional_charges_total: roundMoney(additionalChargesTotal),
     has_additional_charges: additionalCharges.length > 0,
+    quantity_adjustments: changeLog.filter((change) => change.change_type === "quantity_updated"),
   };
 };
 

@@ -26,6 +26,10 @@ const requireOrderOwnership = createOwnershipMiddleware(
   async (req) => orderDb.getOrder(req.pool, req.params.id)
 );
 
+const requireOrderNumberOwnership = createOwnershipMiddleware(
+  async (req) => orderDb.getOrderByNumber(req.pool, req.params.orderNumber)
+);
+
 const requirePaymentOrderOwnership = createOwnershipMiddleware(
   async (req) => orderDb.getOrder(req.pool, req.params.orderId)
 );
@@ -36,6 +40,11 @@ const requireParamUserIdMatch = requireUserIdMatch((req) => req.params.userId);
 // Orders endpoints
 router.get("/user/:userId", requireParamUserIdMatch, orderController.getOrders);
 router.post("/", requireBodyUserIdMatch, orderController.createOrder);
+router.get(
+  "/number/:orderNumber",
+  requireOrderNumberOwnership,
+  orderController.getOrderByNumber
+);
 router.put("/:id", requireOrderOwnership, orderController.updateOrder);
 router.delete("/:id", requireOrderOwnership, orderController.deleteOrder);
 router.get("/:id", requireOrderOwnership, orderController.getOrder);

@@ -523,6 +523,36 @@
           </div>
         {{/if}}
 
+        {{#if quantityAdjustments.length}}
+          <div class="items-section">
+            <table class="additional-charges-table">
+              <thead>
+                <tr>
+                  <th>Order Adjustments</th>
+                  <th style="text-align: center;">Qty Change</th>
+                  <th>Reason</th>
+                  <th class="text-right">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{#each quantityAdjustments}}
+                  <tr>
+                    <td>
+                      {{this.productName}}
+                      {{#if this.variantTitle}}
+                        <div style="font-size: 10px; color: #636e72;">{{this.variantTitle}}</div>
+                      {{/if}}
+                    </td>
+                    <td style="text-align: center;">{{this.previousQuantity}} -> {{this.newQuantity}}</td>
+                    <td>{{this.reason_label}}</td>
+                    <td>{{this.changedAtFormatted}}</td>
+                  </tr>
+                {{/each}}
+              </tbody>
+            </table>
+          </div>
+        {{/if}}
+
         <!-- Totals -->
         <div class="totals-section">
           <div class="totals-box">

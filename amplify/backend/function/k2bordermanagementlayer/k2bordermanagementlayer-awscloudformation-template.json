@@ -20,7 +20,7 @@
     }
   },
   "Resources": {
-    "LambdaLayerVersione4e106d4": {
+    "LambdaLayerVersion503d0ad0": {
       "Type": "AWS::Lambda::LayerVersion",
       "Properties": {
         "CompatibleRuntimes": [
@@ -30,9 +30,9 @@
           "S3Bucket": {
             "Ref": "deploymentBucketName"
           },
-          "S3Key": "amplify-builds/k2bordermanagementlayer-LambdaLayerVersione4e106d4-build.zip"
+          "S3Key": "amplify-builds/k2bordermanagementlayer-LambdaLayerVersion503d0ad0-build.zip"
         },
-        "Description": "Updated layer version 2026-02-19T06:37:02.553Z",
+        "Description": "Updated layer version 2026-05-02T11:20:22.157Z",
         "LayerName": {
           "Fn::Sub": [
             "k2bordermanagementlayer-${env}",
@@ -47,23 +47,32 @@
       "DeletionPolicy": "Delete",
       "UpdateReplacePolicy": "Retain"
     },
-    "LambdaLayerPermissionAwsOrgob5t427dep2e4e106d4": {
+    "LambdaLayerPermissionAwsOrgob5t427dep2503d0ad0": {
       "Type": "AWS::Lambda::LayerVersionPermission",
       "Properties": {
         "Action": "lambda:GetLayerVersion",
-        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer-dev:68",
+        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer-dev:86",
         "OrganizationId": "o-b5t427dep2",
         "Principal": "*"
       }
     },
-    "LambdaLayerPermissionPrivatee4e106d4": {
+    "LambdaLayerPermissionPrivate503d0ad0": {
       "Type": "AWS::Lambda::LayerVersionPermission",
       "Properties": {
         "Action": "lambda:GetLayerVersion",
-        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer-dev:68",
+        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer-dev:86",
         "Principal": {
           "Ref": "AWS::AccountId"
         }
+      }
+    },
+    "LambdaLayerPermissionAwsOrgob5t427dep2Legacy84": {
+      "Type": "AWS::Lambda::LayerVersionPermission",
+      "Properties": {
+        "Action": "lambda:GetLayerVersion",
+        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer-dev:84",
+        "OrganizationId": "o-b5t427dep2",
+        "Principal": "*"
       }
     },
     "LambdaLayerPermissionAwsOrgob5t427dep2Legacy54": {
@@ -74,22 +83,12 @@
         "OrganizationId": "o-b5t427dep2",
         "Principal": "*"
       }
-    },
-    "LambdaLayerPermissionPrivateLegacy54": {
-      "Type": "AWS::Lambda::LayerVersionPermission",
-      "Properties": {
-        "Action": "lambda:GetLayerVersion",
-        "LayerVersionArn": "arn:aws:lambda:ap-southeast-2:311840443005:layer:k2bordermanagementlayer-dev:54",
-        "Principal": {
-          "Ref": "AWS::AccountId"
-        }
-      }
     }
   },
   "Outputs": {
     "Arn": {
       "Value": {
-        "Ref": "LambdaLayerVersione4e106d4"
+        "Ref": "LambdaLayerVersion503d0ad0"
       }
     }
   }

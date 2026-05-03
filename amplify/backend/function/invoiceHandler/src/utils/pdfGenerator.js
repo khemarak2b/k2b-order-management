@@ -5,7 +5,15 @@ const { renderInvoiceHTML } = require("../templates/templateHelper");
 /**
  * Generate invoice PDF from invoice data
  */
-const generateInvoicePDF = async (invoice, lineItems, companyDetails, billingAddress, shippingAddress, companyLogo) => {
+const generateInvoicePDF = async (
+  invoice,
+  lineItems,
+  quantityAdjustments,
+  companyDetails,
+  billingAddress,
+  shippingAddress,
+  companyLogo,
+) => {
   let browser;
 
   try {
@@ -23,7 +31,15 @@ const generateInvoicePDF = async (invoice, lineItems, companyDetails, billingAdd
     const page = await browser.newPage();
 
     // Generate HTML using Handlebars template
-    const html = renderInvoiceHTML(invoice, lineItems, companyDetails, billingAddress, shippingAddress, companyLogo);
+    const html = renderInvoiceHTML(
+      invoice,
+      lineItems,
+      quantityAdjustments,
+      companyDetails,
+      billingAddress,
+      shippingAddress,
+      companyLogo,
+    );
 
     // Set content
     await page.setContent(html, {

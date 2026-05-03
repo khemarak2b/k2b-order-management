@@ -48,7 +48,9 @@ const requireUserIdMatchOrAdminMiddleware = requireUserIdMatchOrAdmin((req) => r
 
 // Orders endpoints - admin can access any user's orders
 router.get("/", orderController.getAllOrders);
+router.get("/order-number/:orderNumber", orderController.getOrderByOrderNumber);
 router.get("/user/:userId", requireUserIdMatchOrAdminMiddleware, orderController.getOrders);
+router.patch("/:orderId/items/:itemId", requirePaymentOrderOwnershipOrAdmin, orderController.updateOrderItemQuantity);
 router.put("/:id", requireOrderOwnershipOrAdmin, orderController.updateOrder);
 router.delete("/:id", requireOrderOwnershipOrAdmin, orderController.deleteOrder);
 router.get("/:id", requireOrderOwnershipOrAdmin, orderController.getOrder);

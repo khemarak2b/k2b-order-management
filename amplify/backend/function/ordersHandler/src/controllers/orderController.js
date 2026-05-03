@@ -25,6 +25,27 @@ exports.getOrder = async (req, res) => {
   }
 };
 
+exports.getOrderByNumber = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+
+    if (!orderNumber) {
+      return res.status(400).json({ error: "Order number is required" });
+    }
+
+    const order = await orderDb.getOrderByNumber(req.pool, orderNumber);
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.json(formatResponse(order));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 exports.getOrders = async (req, res) => {
   try {
     const { userId } = req.params;

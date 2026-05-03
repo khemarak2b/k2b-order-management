@@ -2,6 +2,7 @@ const orderDb = require("../db/orders");
 const { formatResponse } = require("/opt/nodejs/utils/responseFormatter");
 const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { sendNotification } = require("../utils/notificationService");
+const { getAdminChangeReason } = require("../constants/changeLog");
 
 exports.getOrder = async (req, res) => {
   try {
@@ -12,6 +13,27 @@ exports.getOrder = async (req, res) => {
     }
 
     const order = await orderDb.getOrder(req.pool, id);
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.json(formatResponse(order));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.getOrderByOrderNumber = async (req, res) => {
+  try {
+    const { orderNumber } = req.params;
+
+    if (!orderNumber) {
+      return res.status(400).json({ error: "Order number is required" });
+    }
+
+    const order = await orderDb.getOrderByOrderNumber(req.pool, orderNumber);
 
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -248,6 +270,47 @@ exports.updateOrder = async (req, res) => {
     res.status(200).json(formatResponse(order));
   } catch (error) {
     console.error("[updateOrder] Error:", error.message, error.stack);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.updateOrderItemQuantity = async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const quantity = Number(req.body?.quantity);
+    const reasonCode = req.body?.reasonCode || req.body?.reason_code;
+    const adminNote = typeof req.body?.adminNote === "string" ? req.body.adminNote.trim() : req.body?.admin_note;
+
+    if (!orderId || !itemId) {
+      return res.status(400).json({ error: "Order ID and item ID are required" });
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 0) {
+      return res.status(400).json({ error: "Quantity must be a non-negative integer" });
+    }
+
+    const reason = getAdminChangeReason(reasonCode);
+    if (!reason) {
+      return res.status(400).json({ error: "A valid reason code is required" });
+    }
+
+    const order = await orderDb.updateOrderItemQuantity(req.pool, {
+      orderId,
+      itemId,
+      quantity,
+      reasonCode: reason.code,
+      reasonLabel: reason.label,
+      adminNote: adminNote || null,
+      updatedBy: req.user?.sub,
+    });
+
+    res.status(200).json(formatResponse(order));
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
+    console.error("[updateOrderItemQuantity] Error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
   }
 };

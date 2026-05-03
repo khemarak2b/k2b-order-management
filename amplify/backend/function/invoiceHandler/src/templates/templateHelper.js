@@ -34,10 +34,27 @@ const formatDate = (date) => {
   });
 };
 
+const normalizeVariantTitle = (value) => {
+  if (typeof value !== "string") {
+    return value || null;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue && trimmedValue !== "Default Title" ? trimmedValue : null;
+};
+
 /**
  * Compile and render invoice HTML using Handlebars template
  */
-const renderInvoiceHTML = (invoice, lineItems, companyDetails, billingAddress, shippingAddress, companyLogo) => {
+const renderInvoiceHTML = (
+  invoice,
+  lineItems,
+  quantityAdjustments,
+  companyDetails,
+  billingAddress,
+  shippingAddress,
+  companyLogo,
+) => {
   try {
     // Read the template file
     const templatePath = path.join(__dirname, "invoice.hbs");
@@ -71,6 +88,7 @@ const renderInvoiceHTML = (invoice, lineItems, companyDetails, billingAddress, s
     const formattedLineItems = lineItems.map((item) => ({
       ...item,
       productName: item.product_name || item.productName,
+      variantName: normalizeVariantTitle(item.variant_name || item.variantName),
       quantity: item.quantity || 0,
       unitPrice: formatCurrency(item.unit_price || item.unitPrice || 0),
       lineTotal: formatCurrency(item.line_total || item.lineTotal || 0),
@@ -81,6 +99,14 @@ const renderInvoiceHTML = (invoice, lineItems, companyDetails, billingAddress, s
     const additionalChargesTotal = formatCurrency(
       additionalCharges.reduce((sum, item) => sum + (parseFloat(item.line_total || item.lineTotal) || 0), 0),
     );
+    const formattedAdjustments = (Array.isArray(quantityAdjustments) ? quantityAdjustments : []).map((adjustment) => ({
+      ...adjustment,
+      productName: adjustment.metadata?.productName || "Order item",
+      variantTitle: normalizeVariantTitle(adjustment.metadata?.variantTitle),
+      previousQuantity: adjustment.before_value?.quantity ?? adjustment.beforeValue?.quantity ?? 0,
+      newQuantity: adjustment.after_value?.quantity ?? adjustment.afterValue?.quantity ?? 0,
+      changedAtFormatted: formatDate(adjustment.changed_at || adjustment.changedAt || adjustment.created_at),
+    }));
 
     // Prepare data for rendering
     const data = {
@@ -89,6 +115,7 @@ const renderInvoiceHTML = (invoice, lineItems, companyDetails, billingAddress, s
       productLineItems,
       additionalCharges,
       additionalChargesTotal,
+      quantityAdjustments: formattedAdjustments,
       companyDetails,
       billingAddress,
       shippingAddress,
