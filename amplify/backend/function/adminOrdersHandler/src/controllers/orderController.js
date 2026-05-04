@@ -277,6 +277,7 @@ exports.updateOrder = async (req, res) => {
 exports.updateOrderItemQuantity = async (req, res) => {
   try {
     const { orderId, itemId } = req.params;
+    const schema = process.env.ENVIRONMENT || "dev";
     const quantity = Number(req.body?.quantity);
     const reasonCode = req.body?.reasonCode || req.body?.reason_code;
     const adminNote = typeof req.body?.adminNote === "string" ? req.body.adminNote.trim() : req.body?.admin_note;
@@ -289,7 +290,7 @@ exports.updateOrderItemQuantity = async (req, res) => {
       return res.status(400).json({ error: "Quantity must be a non-negative integer" });
     }
 
-    const reason = getAdminChangeReason(reasonCode);
+    const reason = await getAdminChangeReason(req.pool, schema, reasonCode);
     if (!reason) {
       return res.status(400).json({ error: "A valid reason code is required" });
     }
