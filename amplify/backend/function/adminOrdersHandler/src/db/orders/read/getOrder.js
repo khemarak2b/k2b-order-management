@@ -15,9 +15,11 @@ const getOrder = async (pool, id) => {
               THEN TRIM(COALESCE(au.first_name, '') || ' ' || COALESCE(au.last_name, ''))
             ELSE NULL
           END AS created_by_admin_name,
-          au.email AS created_by_admin_email
+          au.email AS created_by_admin_email,
+          pp.name AS pricing_profile_name
         FROM ${schema}.orders o
         LEFT JOIN ${schema}.admin_users au ON au.id = o.created_by_admin_id
+        LEFT JOIN ${schema}.pricing_profiles pp ON pp.id = o.pricing_profile_id
         WHERE o.id = $1
       `,
       [id],
