@@ -8,7 +8,11 @@ const express = require("express");
 const router = express.Router();
 const orderController = require("../controllers/orderController");
 const { adminAuthMiddleware } = require("/opt/nodejs/middleware/adminAuthMiddleware");
-const { createRoleAwareOwnershipMiddleware, requireAdmin, requireUserIdMatchOrAdmin } = require("/opt/nodejs/middleware/roleAuthorizationMiddleware");
+const {
+  createRoleAwareOwnershipMiddleware,
+  requireAdmin,
+  requireUserIdMatchOrAdmin,
+} = require("/opt/nodejs/middleware/roleAuthorizationMiddleware");
 const orderDb = require("../db/orders");
 
 // Bypass auth for quick testing (can be toggled in Lambda env vars without redeployment)
@@ -18,7 +22,7 @@ const BYPASS_AUTH = process.env.BYPASS_AUTH === "true";
 const authMiddleware = (req, res, next) => {
   if (BYPASS_AUTH) {
     console.warn("[AUTH BYPASS ENABLED] Skipping authentication checks");
-    req.user = { sub: "test-user", isAdmin: true, adminId: "test-admin", role: "admin" };
+    req.user = { sub: "test-user", isAdmin: true, adminId: 1, role: "SUPER_ADMIN" };
     return next();
   }
   adminAuthMiddleware(req, res, next);
@@ -36,12 +40,12 @@ router.use(authMiddleware);
 router.use(requireAdminMiddleware);
 
 // Create reusable middleware for admin orders
-const requireOrderOwnershipOrAdmin = createRoleAwareOwnershipMiddleware(
-  async (req) => orderDb.getOrder(req.pool, req.params.id)
+const requireOrderOwnershipOrAdmin = createRoleAwareOwnershipMiddleware(async (req) =>
+  orderDb.getOrder(req.pool, req.params.id),
 );
 
-const requirePaymentOrderOwnershipOrAdmin = createRoleAwareOwnershipMiddleware(
-  async (req) => orderDb.getOrder(req.pool, req.params.orderId)
+const requirePaymentOrderOwnershipOrAdmin = createRoleAwareOwnershipMiddleware(async (req) =>
+  orderDb.getOrder(req.pool, req.params.orderId),
 );
 
 const requireUserIdMatchOrAdminMiddleware = requireUserIdMatchOrAdmin((req) => req.params.userId);
@@ -50,6 +54,7 @@ const requireUserIdMatchOrAdminMiddleware = requireUserIdMatchOrAdmin((req) => r
 router.get("/", orderController.getAllOrders);
 router.get("/order-number/:orderNumber", orderController.getOrderByOrderNumber);
 router.get("/user/:userId", requireUserIdMatchOrAdminMiddleware, orderController.getOrders);
+router.post("/", orderController.createOrder);
 router.patch("/:orderId/items/:itemId", requirePaymentOrderOwnershipOrAdmin, orderController.updateOrderItemQuantity);
 router.put("/:id", requireOrderOwnershipOrAdmin, orderController.updateOrder);
 router.delete("/:id", requireOrderOwnershipOrAdmin, orderController.deleteOrder);

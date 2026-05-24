@@ -6,7 +6,22 @@ const getOrder = async (pool, id) => {
 
   try {
     // Get order
-    const orderResult = await client.query(`SELECT * FROM ${schema}.orders WHERE id = $1`, [id]);
+    const orderResult = await client.query(
+      `
+        SELECT
+          o.*,
+          CASE
+            WHEN o.created_by_admin AND o.created_by_admin_id IS NOT NULL
+              THEN TRIM(COALESCE(au.first_name, '') || ' ' || COALESCE(au.last_name, ''))
+            ELSE NULL
+          END AS created_by_admin_name,
+          au.email AS created_by_admin_email
+        FROM ${schema}.orders o
+        LEFT JOIN ${schema}.admin_users au ON au.id = o.created_by_admin_id
+        WHERE o.id = $1
+      `,
+      [id],
+    );
 
     if (orderResult.rows.length === 0) {
       return null;
@@ -19,7 +34,7 @@ const getOrder = async (pool, id) => {
       `SELECT * FROM ${schema}.order_items
              WHERE order_id = $1
              ORDER BY id ASC`,
-      [id]
+      [id],
     );
 
     // Get payments
@@ -27,7 +42,7 @@ const getOrder = async (pool, id) => {
       `SELECT * FROM ${schema}.payments
              WHERE order_id = $1
              ORDER BY created_at DESC`,
-      [id]
+      [id],
     );
 
     const changeLog = await getAdminChangeLog(client, id, schema);

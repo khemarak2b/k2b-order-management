@@ -5,7 +5,22 @@ const getOrderByOrderNumber = async (pool, orderNumber) => {
   const schema = process.env.ENVIRONMENT || "dev";
 
   try {
-    const orderResult = await client.query(`SELECT * FROM ${schema}.orders WHERE order_number = $1`, [orderNumber]);
+    const orderResult = await client.query(
+      `
+        SELECT
+          o.*,
+          CASE
+            WHEN o.created_by_admin AND o.created_by_admin_id IS NOT NULL
+              THEN TRIM(COALESCE(au.first_name, '') || ' ' || COALESCE(au.last_name, ''))
+            ELSE NULL
+          END AS created_by_admin_name,
+          au.email AS created_by_admin_email
+        FROM ${schema}.orders o
+        LEFT JOIN ${schema}.admin_users au ON au.id = o.created_by_admin_id
+        WHERE o.order_number = $1
+      `,
+      [orderNumber],
+    );
 
     if (orderResult.rows.length === 0) {
       return null;

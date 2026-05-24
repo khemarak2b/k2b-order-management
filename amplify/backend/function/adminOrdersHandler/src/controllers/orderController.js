@@ -1,8 +1,10 @@
 const orderDb = require("../db/orders");
 const { formatResponse } = require("/opt/nodejs/utils/responseFormatter");
 const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
+const { generateFormattedOrderId } = require("../utils/idGenerator");
 const { sendNotification } = require("../utils/notificationService");
 const { getAdminChangeReason } = require("../constants/changeLog");
+const VALID_PAYMENT_METHODS = ["bank_transfer", "credit_card", "cash", "cash_on_delivery", "cheque"];
 
 exports.getOrder = async (req, res) => {
   try {
@@ -155,6 +157,93 @@ exports.getAllOrders = async (req, res) => {
     );
   } catch (error) {
     console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.createOrder = async (req, res) => {
+  try {
+    const {
+      customerUserId,
+      pricingProfileId = null,
+      shippingAddress,
+      billingAddress,
+      items,
+      notes,
+      paymentMethod,
+    } = req.body || {};
+
+    if (!customerUserId) {
+      return res.status(400).json({ error: "customerUserId is required" });
+    }
+
+    if (!shippingAddress) {
+      return res.status(400).json({ error: "shippingAddress is required" });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "At least one order item is required" });
+    }
+
+    if (paymentMethod && !VALID_PAYMENT_METHODS.includes(paymentMethod)) {
+      return res.status(400).json({
+        error: `Invalid payment method. Must be one of: ${VALID_PAYMENT_METHODS.join(", ")}`,
+      });
+    }
+
+    if (pricingProfileId) {
+      const profileAccessResult = await req.pool.query(
+        `
+          SELECT 1
+          FROM ${process.env.ENVIRONMENT || "dev"}.admin_pricing_profiles
+          WHERE admin_user_id = $1 AND profile_id = $2
+          LIMIT 1
+        `,
+        [req.user?.adminId, pricingProfileId],
+      );
+
+      if (profileAccessResult.rows.length === 0) {
+        return res.status(403).json({ error: "Selected pricing profile is not assigned to this admin" });
+      }
+    }
+
+    const orderSeed = {
+      user_id: customerUserId,
+      order_number: generateFormattedOrderId(),
+      status: "pending",
+      currency_code: "AUD",
+      notes: notes || null,
+      shipping_address: shippingAddress,
+      billing_address: billingAddress || shippingAddress,
+      created_by_admin: true,
+      created_by_admin_id: req.user?.adminId || null,
+      pricing_profile_id: pricingProfileId,
+      order_items: Array.isArray(items) ? items.map((item) => toSnakeCase(item)) : [],
+    };
+
+    const result = await orderDb.createOrder(req.pool, orderSeed);
+
+    if (paymentMethod) {
+      await orderDb.createPayment(req.pool, {
+        order_id: result.order.id,
+        payment_method: paymentMethod,
+        amount: result.order.total_amount,
+        status: "pending",
+        payment_details: null,
+      });
+    }
+
+    const fullOrder = await orderDb.getOrder(req.pool, result.order.id);
+
+    try {
+      await sendOrderCreatedNotification(result, req.pool);
+    } catch (notificationError) {
+      console.warn("[admin createOrder] Failed to send notification:", notificationError.message);
+    }
+
+    res.status(201).json(formatResponse(fullOrder || result.order));
+  } catch (error) {
+    console.error("[admin createOrder] Error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -430,3 +519,47 @@ exports.updatePayment = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+async function sendOrderCreatedNotification(orderResults, pool) {
+  const { order } = orderResults;
+  const client = await pool.connect();
+
+  try {
+    const schema = process.env.ENVIRONMENT || "dev";
+    const result = await client.query(`SELECT email FROM ${schema}.users WHERE id = $1`, [order.user_id]);
+
+    if (result.rows.length === 0) {
+      throw new Error(`User not found for order ${order.id}`);
+    }
+
+    const user = result.rows[0];
+    const formatAusDate = (date) => {
+      if (!date) return null;
+      return new Date(date).toLocaleDateString("en-AU");
+    };
+
+    await sendNotification({
+      to: user.email,
+      subject: `Order Received #${order.order_number}`,
+      template: "order-received",
+      data: {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        userId: order.user_id,
+        totalAmount: order.total_amount,
+        subtotal: order.subtotal,
+        taxAmount: order.tax_amount,
+        shippingCost: order.shipping_cost,
+        discountAmount: order.discount_amount,
+        currencyCode: order.currency_code,
+        shippingAddress: order.shipping_address,
+        billingAddress: order.billing_address,
+        notes: order.notes,
+        createdAt: formatAusDate(order.created_at),
+        updatedAt: formatAusDate(order.updated_at),
+      },
+    });
+  } finally {
+    client.release();
+  }
+}

@@ -4,8 +4,20 @@ const getOrderByNumber = async (pool, orderNumber) => {
 
   try {
     const orderResult = await client.query(
-      `SELECT * FROM ${schema}.orders WHERE order_number = $1`,
-      [orderNumber]
+      `
+        SELECT
+          o.*,
+          CASE
+            WHEN o.created_by_admin AND o.created_by_admin_id IS NOT NULL
+              THEN TRIM(COALESCE(au.first_name, '') || ' ' || COALESCE(au.last_name, ''))
+            ELSE NULL
+          END AS created_by_admin_name,
+          au.email AS created_by_admin_email
+        FROM ${schema}.orders o
+        LEFT JOIN ${schema}.admin_users au ON au.id = o.created_by_admin_id
+        WHERE o.order_number = $1
+      `,
+      [orderNumber],
     );
 
     if (orderResult.rows.length === 0) {
@@ -18,14 +30,14 @@ const getOrderByNumber = async (pool, orderNumber) => {
       `SELECT * FROM ${schema}.order_items
              WHERE order_id = $1
              ORDER BY id ASC`,
-      [order.id]
+      [order.id],
     );
 
     const paymentsResult = await client.query(
       `SELECT * FROM ${schema}.payments
              WHERE order_id = $1
              ORDER BY created_at DESC`,
-      [order.id]
+      [order.id],
     );
 
     return {

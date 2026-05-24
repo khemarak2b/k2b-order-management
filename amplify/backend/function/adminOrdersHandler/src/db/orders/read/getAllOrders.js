@@ -1,9 +1,4 @@
-const getAllOrders = async (
-  pool,
-  filters = {},
-  limit = 20,
-  offset = 0
-) => {
+const getAllOrders = async (pool, filters = {}, limit = 20, offset = 0) => {
   const client = await pool.connect();
   const schema = process.env.ENVIRONMENT || "dev";
 
@@ -36,8 +31,6 @@ const getAllOrders = async (
       whereClauses.push(`o.user_id = $${params.length + 1}`);
       params.push(userId);
     }
-
-
 
     // Amount range filters
     if (minAmount !== undefined && minAmount !== null) {
@@ -74,7 +67,7 @@ const getAllOrders = async (
     // Payment status filter
     if (paymentStatus) {
       whereClauses.push(
-        `EXISTS (SELECT 1 FROM ${schema}.payments WHERE order_id = o.id AND status = $${params.length + 1})`
+        `EXISTS (SELECT 1 FROM ${schema}.payments WHERE order_id = o.id AND status = $${params.length + 1})`,
       );
       params.push(paymentStatus);
     }
@@ -85,20 +78,28 @@ const getAllOrders = async (
       params.push(`%${orderNumber}%`);
     }
 
-    const whereClause =
-      whereClauses.length > 0 ? ` WHERE ${whereClauses.join(" AND ")}` : "";
+    const whereClause = whereClauses.length > 0 ? ` WHERE ${whereClauses.join(" AND ")}` : "";
 
     // Get total count
-    const countResult = await client.query(
-      `SELECT COUNT(*) as count FROM ${schema}.orders o${whereClause}`,
-      params
-    );
+    const countResult = await client.query(`SELECT COUNT(*) as count FROM ${schema}.orders o${whereClause}`, params);
     const total = parseInt(countResult.rows[0].count, 10);
 
     // Get paginated orders
     const countParams = params.length;
     const ordersResult = await client.query(
-      `SELECT * FROM ${schema}.orders o${whereClause} ORDER BY o.created_at DESC LIMIT $${countParams + 1} OFFSET $${countParams + 2}`,
+      `SELECT
+         o.*,
+         CASE
+           WHEN o.created_by_admin AND o.created_by_admin_id IS NOT NULL
+             THEN TRIM(COALESCE(au.first_name, '') || ' ' || COALESCE(au.last_name, ''))
+           ELSE NULL
+         END AS created_by_admin_name,
+         au.email AS created_by_admin_email
+       FROM ${schema}.orders o
+       LEFT JOIN ${schema}.admin_users au ON au.id = o.created_by_admin_id
+       ${whereClause}
+       ORDER BY o.created_at DESC
+       LIMIT $${countParams + 1} OFFSET $${countParams + 2}`,
       [...params, limit, offset],
     );
 

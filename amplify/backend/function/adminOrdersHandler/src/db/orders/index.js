@@ -1,5 +1,5 @@
 const { getOrder, getOrderByOrderNumber, getOrders, getAllOrders, getPayment, getPayments } = require("./read");
-const { createPayment } = require("./create");
+const { createOrder, createPayment } = require("./create");
 const { updateOrder, updatePayment, updateOrderItemQuantity } = require("./update");
 const { deleteOrder } = require("./delete");
 
@@ -11,6 +11,7 @@ module.exports = {
   getPayment,
   getPayments,
   deleteOrder,
+  createOrder,
   createPayment,
   updateOrder,
   updatePayment,
