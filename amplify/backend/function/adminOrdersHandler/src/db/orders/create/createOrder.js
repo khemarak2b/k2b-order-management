@@ -79,6 +79,7 @@ const createOrder = async (pool, data) => {
 
     const orderData = {
       ...orderSeed,
+      pricing_profile_id: pricing_profile_id || null,
       subtotal,
       tax_amount: normalizedTaxAmount,
       shipping_cost: normalizedShippingCost,
