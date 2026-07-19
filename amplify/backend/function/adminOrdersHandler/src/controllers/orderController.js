@@ -4,6 +4,14 @@ const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { generateFormattedOrderId } = require("../utils/idGenerator");
 const { sendNotification } = require("../utils/notificationService");
 const { getAdminChangeReason } = require("../constants/changeLog");
+const {
+  auditAdminOrderEvent,
+  buildOrderChanges,
+  buildPaymentChanges,
+  findOrderItem,
+  pickSafeOrderFields,
+  pickSafePaymentFields,
+} = require("../audit/adminOrderAudit");
 const VALID_PAYMENT_METHODS = ["bank_transfer", "credit_card", "cash", "cash_on_delivery", "cheque"];
 
 exports.getOrder = async (req, res) => {
@@ -223,8 +231,9 @@ exports.createOrder = async (req, res) => {
 
     const result = await orderDb.createOrder(req.pool, orderSeed);
 
+    let createdPayment = null;
     if (paymentMethod) {
-      await orderDb.createPayment(req.pool, {
+      createdPayment = await orderDb.createPayment(req.pool, {
         order_id: result.order.id,
         payment_method: paymentMethod,
         amount: result.order.total_amount,
@@ -234,6 +243,28 @@ exports.createOrder = async (req, res) => {
     }
 
     const fullOrder = await orderDb.getOrder(req.pool, result.order.id);
+
+    await auditAdminOrderEvent(req, {
+      eventType: "ADMIN_ORDER_CREATED",
+      action: "CREATE",
+      severity: "MEDIUM",
+      order: fullOrder || result.order,
+      changes: { before: {}, after: pickSafeOrderFields(fullOrder || result.order) },
+      metadata: { itemCount: (fullOrder?.items || result.items || []).length },
+    });
+
+    if (createdPayment) {
+      await auditAdminOrderEvent(req, {
+        eventType: "ADMIN_ORDER_PAYMENT_CREATED",
+        action: "CREATE",
+        severity: "HIGH",
+        category: "PAYMENT",
+        resourceType: "PAYMENT",
+        order: fullOrder || result.order,
+        payment: createdPayment,
+        changes: { before: {}, after: pickSafePaymentFields(createdPayment) },
+      });
+    }
 
     try {
       await sendOrderCreatedNotification(result, req.pool);
@@ -262,6 +293,14 @@ exports.deleteOrder = async (req, res) => {
     }
 
     await orderDb.deleteOrder(req.pool, id);
+    await auditAdminOrderEvent(req, {
+      eventType: "ADMIN_ORDER_DELETED",
+      action: "DELETE",
+      severity: "HIGH",
+      order,
+      changes: { before: pickSafeOrderFields(order), after: {} },
+      metadata: { itemCount: (order.items || []).length, paymentCount: (order.payments || []).length },
+    });
     res.status(204).send();
   } catch (error) {
     console.error(error);
@@ -279,14 +318,13 @@ exports.updateOrder = async (req, res) => {
       return res.status(400).json({ error: "Order ID is required" });
     }
 
-    // Get current order for transition validation and later comparison
-    let currentOrder = null;
-    if (status) {
-      currentOrder = await orderDb.getOrder(req.pool, id);
-      if (!currentOrder) {
-        return res.status(404).json({ error: "Order not found" });
-      }
+    // Get current order for transition validation and audit comparison.
+    const currentOrder = await orderDb.getOrder(req.pool, id);
+    if (!currentOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
 
+    if (status) {
       // Validate status
       const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled", "refunded"];
       if (!validStatuses.includes(status)) {
@@ -323,6 +361,18 @@ exports.updateOrder = async (req, res) => {
     console.log("[updateOrder] Updating Order with data:", JSON.stringify(dbData));
     const order = await orderDb.updateOrder(req.pool, dbData);
     console.log("[updateOrder] Order updated successfully:", JSON.stringify(order));
+
+    const statusChanged = Boolean(status && status !== currentOrder.status);
+    await auditAdminOrderEvent(req, {
+      eventType: statusChanged ? "ADMIN_ORDER_STATUS_CHANGED" : "ADMIN_ORDER_UPDATED",
+      action: "UPDATE",
+      severity: "MEDIUM",
+      order: order || currentOrder,
+      changes: buildOrderChanges(currentOrder, order || currentOrder),
+      metadata: statusChanged
+        ? { previousStatus: currentOrder.status, newStatus: status }
+        : {},
+    });
 
     // Send notification email to customer only if status has changed
     try {
@@ -384,6 +434,12 @@ exports.updateOrderItemQuantity = async (req, res) => {
       return res.status(400).json({ error: "A valid reason code is required" });
     }
 
+    const previousOrder = await orderDb.getOrder(req.pool, orderId);
+    if (!previousOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    const previousItem = findOrderItem(previousOrder, itemId);
+
     const order = await orderDb.updateOrderItemQuantity(req.pool, {
       orderId,
       itemId,
@@ -392,6 +448,27 @@ exports.updateOrderItemQuantity = async (req, res) => {
       reasonLabel: reason.label,
       adminNote: adminNote || null,
       updatedBy: req.user?.sub,
+    });
+
+    const updatedItem = findOrderItem(order, itemId);
+    await auditAdminOrderEvent(req, {
+      eventType: "ADMIN_ORDER_ITEM_QUANTITY_CHANGED",
+      action: "UPDATE",
+      severity: "MEDIUM",
+      resourceType: "ORDER_ITEM",
+      order,
+      item: updatedItem || previousItem,
+      changes: {
+        before: {
+          quantity: previousItem?.quantity,
+          lineTotal: previousItem?.line_total,
+        },
+        after: {
+          quantity: updatedItem?.quantity ?? quantity,
+          lineTotal: updatedItem?.line_total,
+        },
+      },
+      metadata: { reasonCode: reason.code, reasonLabel: reason.label },
     });
 
     res.status(200).json(formatResponse(order));
@@ -440,6 +517,16 @@ exports.createPayment = async (req, res) => {
       payment_details: paymentDetails || null,
     });
     console.log("[createPayment] Payment created successfully:", JSON.stringify(payment));
+    await auditAdminOrderEvent(req, {
+      eventType: "ADMIN_ORDER_PAYMENT_CREATED",
+      action: "CREATE",
+      severity: "HIGH",
+      category: "PAYMENT",
+      resourceType: "PAYMENT",
+      order,
+      payment,
+      changes: { before: {}, after: pickSafePaymentFields(payment) },
+    });
     res.status(201).json(formatResponse(payment));
   } catch (error) {
     console.error("[createPayment] Error:", error.message, error.stack);
@@ -512,6 +599,18 @@ exports.updatePayment = async (req, res) => {
     console.log("[updatePayment] Updating payment with data:", JSON.stringify(dbData));
     const updatedPayment = await orderDb.updatePayment(req.pool, dbData);
     console.log("[updatePayment] Payment updated successfully:", JSON.stringify(updatedPayment));
+
+    const order = await orderDb.getOrder(req.pool, orderId);
+    await auditAdminOrderEvent(req, {
+      eventType: "ADMIN_ORDER_PAYMENT_UPDATED",
+      action: "UPDATE",
+      severity: "HIGH",
+      category: "PAYMENT",
+      resourceType: "PAYMENT",
+      order,
+      payment: updatedPayment || payment,
+      changes: buildPaymentChanges(payment, updatedPayment || payment),
+    });
 
     res.json(formatResponse(updatedPayment));
   } catch (error) {
