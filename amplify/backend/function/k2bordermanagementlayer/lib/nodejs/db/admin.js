@@ -2,7 +2,7 @@
  * Map Cognito sub to admin user ID
  * @param {Pool} pool - Database connection pool
  * @param {string} cognitoSub - Cognito user ID (sub claim)
- * @returns {Promise<Object>} Admin user { id, role }
+ * @returns {Promise<Object>} Admin user identity
  */
 async function getAdminUserByCognitoSub(pool, cognitoSub) {
   const client = await pool.connect();
@@ -10,7 +10,9 @@ async function getAdminUserByCognitoSub(pool, cognitoSub) {
     const schema = process.env.ENVIRONMENT || "dev";
     
     const result = await client.query(
-      `SELECT id, role FROM ${schema}.admin_users WHERE cognito_sub = $1`,
+      `SELECT id, role, first_name, last_name, email
+         FROM ${schema}.admin_users
+        WHERE cognito_sub = $1`,
       [cognitoSub]
     );
 

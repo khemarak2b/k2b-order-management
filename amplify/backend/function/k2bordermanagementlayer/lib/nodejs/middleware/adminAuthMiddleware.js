@@ -44,6 +44,11 @@ const adminAuthMiddleware = async (req, res, next) => {
       isAdmin: true,
       adminId: adminUser.id,
       role: adminUser.role,
+      email: adminUser.email || "",
+      name:
+        [adminUser.first_name, adminUser.last_name]
+          .filter(Boolean)
+          .join(" ") || adminUser.email || "",
       cognitoAuthProvider,
     };
 
