@@ -4,6 +4,13 @@ const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { generateInvoicePDF } = require("../utils/pdfGenerator");
 const { uploadInvoicePDF, getInvoicePDFPresignedUrl } = require("../utils/s3Storage");
 const getInvoiceChangeLog = require("../db/invoices/read/getInvoiceChangeLog");
+const {
+  auditInvoiceEvent,
+  buildInvoiceChanges,
+  buildPaymentChanges,
+  pickSafeInvoiceFields,
+  pickSafePaymentFields,
+} = require("../audit/invoiceAudit");
 
 const normalizeVariantTitle = (value) => {
   if (typeof value !== "string") {
@@ -118,12 +125,24 @@ exports.getInvoiceByOrder = async (req, res) => {
  * Note: All prices are GST inclusive, so we extract the GST portion
  */
 exports.generateInvoiceFromOrder = async (req, res) => {
+  let invoiceForAudit = null;
+  let existingInvoiceForAudit = null;
+
   try {
     console.log("[generateInvoiceFromOrder] Request params:", JSON.stringify(req.params));
 
     const { orderId } = req.params;
 
     if (!orderId) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_GENERATED",
+        action: "GENERATE",
+        severity: "HIGH",
+        invoice: {},
+        outcomeStatus: "FAILURE",
+        reason: "Order ID is required",
+        errorCode: "VALIDATION_ERROR",
+      });
       return res.status(400).json({ error: "Order ID is required" });
     }
 
@@ -141,11 +160,21 @@ exports.generateInvoiceFromOrder = async (req, res) => {
     const order = await fetchOrderWithItems(req.pool, orderId);
 
     if (!order) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_GENERATED",
+        action: "GENERATE",
+        severity: "HIGH",
+        invoice: { order_id: orderId },
+        outcomeStatus: "FAILURE",
+        reason: "Order was not found",
+        errorCode: "ORDER_NOT_FOUND",
+      });
       return res.status(404).json({ error: "Order not found" });
     }
 
     // Check if invoice already exists for this order
     const existingInvoice = await invoiceDb.getInvoiceByOrder(req.pool, orderId);
+    existingInvoiceForAudit = existingInvoice;
 
     // Extract GST from prices (GST inclusive model)
     // GST Rate = 10%, so to extract: gst = total / 11 (since total = base * 1.1)
@@ -297,6 +326,7 @@ exports.generateInvoiceFromOrder = async (req, res) => {
       result = await invoiceDb.createInvoice(req.pool, invoiceData);
       createdInvoice = result.invoice;
     }
+    invoiceForAudit = createdInvoice;
 
     // Generate PDF and upload to S3
     try {
@@ -341,6 +371,23 @@ exports.generateInvoiceFromOrder = async (req, res) => {
 
       console.log("[generateInvoiceFromOrder] PDF generated and uploaded successfully");
 
+      invoiceForAudit = updatedInvoiceData;
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_GENERATED",
+        action: "GENERATE",
+        severity: "MEDIUM",
+        invoice: updatedInvoiceData,
+        changes: existingInvoiceForAudit
+          ? buildInvoiceChanges(existingInvoiceForAudit, updatedInvoiceData)
+          : { before: null, after: pickSafeInvoiceFields(updatedInvoiceData) },
+        tenantId: order.tenant_id,
+        metadata: {
+          regenerated: Boolean(existingInvoiceForAudit),
+          pdfGenerated: true,
+          lineItemCount: result.line_items?.length || 0,
+        },
+      });
+
       // Return updated invoice with PDF URL
       res.status(201).json(
         formatResponse({
@@ -353,11 +400,36 @@ exports.generateInvoiceFromOrder = async (req, res) => {
         "[generateInvoiceFromOrder] Warning: PDF generation failed, but invoice was created:",
         pdfError.message,
       );
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_GENERATED",
+        action: "GENERATE",
+        severity: "MEDIUM",
+        invoice: createdInvoice,
+        changes: existingInvoiceForAudit
+          ? buildInvoiceChanges(existingInvoiceForAudit, createdInvoice)
+          : { before: null, after: pickSafeInvoiceFields(createdInvoice) },
+        tenantId: order.tenant_id,
+        metadata: {
+          regenerated: Boolean(existingInvoiceForAudit),
+          pdfGenerated: false,
+          lineItemCount: result.line_items?.length || 0,
+        },
+      });
       // Return original invoice without PDF URL
       res.status(201).json(formatResponse(result));
     }
   } catch (error) {
     console.error("[generateInvoiceFromOrder] Error:", error.message, error.stack);
+    await auditInvoiceEvent(req, {
+      eventType: "INVOICE_GENERATED",
+      action: "GENERATE",
+      severity: "HIGH",
+      invoice: invoiceForAudit || existingInvoiceForAudit || { order_id: req.params?.orderId },
+      outcomeStatus: "FAILURE",
+      reason: "Invoice generation failed",
+      errorCode: "INVOICE_GENERATION_FAILED",
+      metadata: { regenerated: Boolean(existingInvoiceForAudit) },
+    });
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -506,8 +578,10 @@ const regenerateInvoicePdf = async (pool, invoiceId, updatedBy) => {
  * Update invoice
  */
 exports.updateInvoice = async (req, res) => {
+  let existingInvoiceForAudit = null;
+
   try {
-    console.log("[updateInvoice] Request body:", JSON.stringify(req.body));
+    console.log("[updateInvoice] Updating invoice:", req.params?.id);
 
     const { id } = req.params;
 
@@ -516,6 +590,7 @@ exports.updateInvoice = async (req, res) => {
     }
 
     const existingInvoice = await invoiceDb.getInvoice(req.pool, id);
+    existingInvoiceForAudit = existingInvoice;
     if (!existingInvoice) {
       return res.status(404).json({ error: "Invoice not found" });
     }
@@ -573,12 +648,42 @@ exports.updateInvoice = async (req, res) => {
 
     const invoice = await invoiceDb.getInvoice(req.pool, id);
 
+    await auditInvoiceEvent(req, {
+      eventType: "INVOICE_UPDATED",
+      action: "UPDATE",
+      severity: "MEDIUM",
+      invoice,
+      changes: buildInvoiceChanges(existingInvoice, invoice),
+      metadata: {
+        additionalLineItemCount: requestedAdditions.length,
+        pdfRegenerationRequested: requestedAdditions.length > 0,
+      },
+    });
+
     res.json(formatResponse(invoice));
   } catch (error) {
     if (error.message?.includes("Invalid additional charge")) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_UPDATED",
+        action: "UPDATE",
+        severity: "HIGH",
+        invoice: existingInvoiceForAudit || { id: req.params?.id },
+        outcomeStatus: "FAILURE",
+        reason: "Invoice update validation failed",
+        errorCode: "VALIDATION_ERROR",
+      });
       return res.status(400).json({ error: error.message });
     }
     console.error("[updateInvoice] Error:", error.message, error.stack);
+    await auditInvoiceEvent(req, {
+      eventType: "INVOICE_UPDATED",
+      action: "UPDATE",
+      severity: "HIGH",
+      invoice: existingInvoiceForAudit || { id: req.params?.id },
+      outcomeStatus: "FAILURE",
+      reason: "Invoice update failed",
+      errorCode: "INVOICE_UPDATE_FAILED",
+    });
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -587,6 +692,8 @@ exports.updateInvoice = async (req, res) => {
  * Update invoice status
  */
 exports.updateInvoiceStatus = async (req, res) => {
+  let existingInvoiceForAudit = null;
+
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -597,16 +704,48 @@ exports.updateInvoiceStatus = async (req, res) => {
 
     const validStatuses = ["draft", "issued", "sent", "partially_paid", "paid", "overdue", "cancelled"];
     if (!validStatuses.includes(status)) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_STATUS_CHANGED",
+        action: "UPDATE_STATUS",
+        severity: "HIGH",
+        invoice: { id },
+        outcomeStatus: "FAILURE",
+        reason: "Invoice status validation failed",
+        errorCode: "VALIDATION_ERROR",
+      });
       return res.status(400).json({
         error: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
       });
     }
 
+    const existingInvoice = await invoiceDb.getInvoice(req.pool, id);
+    existingInvoiceForAudit = existingInvoice;
+    if (!existingInvoice) {
+      return res.status(404).json({ error: "Invoice not found" });
+    }
+
     const invoice = await invoiceDb.updateInvoice(req.pool, { id, status });
+
+    await auditInvoiceEvent(req, {
+      eventType: "INVOICE_STATUS_CHANGED",
+      action: "UPDATE_STATUS",
+      severity: "MEDIUM",
+      invoice,
+      changes: buildInvoiceChanges(existingInvoice, invoice),
+    });
 
     res.json(formatResponse(invoice));
   } catch (error) {
     console.error("[updateInvoiceStatus] Error:", error.message);
+    await auditInvoiceEvent(req, {
+      eventType: "INVOICE_STATUS_CHANGED",
+      action: "UPDATE_STATUS",
+      severity: "HIGH",
+      invoice: existingInvoiceForAudit || { id: req.params?.id },
+      outcomeStatus: "FAILURE",
+      reason: "Invoice status update failed",
+      errorCode: "INVOICE_STATUS_UPDATE_FAILED",
+    });
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -615,6 +754,8 @@ exports.updateInvoiceStatus = async (req, res) => {
  * Delete invoice (soft delete)
  */
 exports.deleteInvoice = async (req, res) => {
+  let invoiceForAudit = null;
+
   try {
     const { id } = req.params;
 
@@ -623,14 +764,40 @@ exports.deleteInvoice = async (req, res) => {
     }
 
     const invoice = await invoiceDb.getInvoice(req.pool, id);
+    invoiceForAudit = invoice;
     if (!invoice || shouldHideInvoiceFromRequester(req, invoice)) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_DELETED",
+        action: "DELETE",
+        severity: "HIGH",
+        invoice: { id },
+        outcomeStatus: "FAILURE",
+        reason: "Invoice was not found",
+        errorCode: "INVOICE_NOT_FOUND",
+      });
       return res.status(404).json({ error: "Invoice not found" });
     }
 
     await invoiceDb.deleteInvoice(req.pool, id);
+    await auditInvoiceEvent(req, {
+      eventType: "INVOICE_DELETED",
+      action: "DELETE",
+      severity: "HIGH",
+      invoice,
+      changes: { before: pickSafeInvoiceFields(invoice), after: null },
+    });
     res.status(204).send();
   } catch (error) {
     console.error("[deleteInvoice] Error:", error.message);
+    await auditInvoiceEvent(req, {
+      eventType: "INVOICE_DELETED",
+      action: "DELETE",
+      severity: "HIGH",
+      invoice: invoiceForAudit || { id: req.params?.id },
+      outcomeStatus: "FAILURE",
+      reason: "Invoice deletion failed",
+      errorCode: "INVOICE_DELETE_FAILED",
+    });
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -670,8 +837,10 @@ exports.getInvoicePayments = async (req, res) => {
  * Record payment against invoice
  */
 exports.recordPayment = async (req, res) => {
+  let invoiceForAudit = null;
+
   try {
-    console.log("[recordPayment] Request body:", JSON.stringify(req.body));
+    console.log("[recordPayment] Recording invoice payment:", req.params?.id);
 
     const { id } = req.params;
     const { amount, payment_method, payment_reference, payment_date, notes } = req.body;
@@ -681,7 +850,32 @@ exports.recordPayment = async (req, res) => {
     }
 
     if (!amount || parseFloat(amount) <= 0) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_PAYMENT_RECORDED",
+        action: "RECORD_PAYMENT",
+        category: "PAYMENT",
+        severity: "HIGH",
+        invoice: { id },
+        outcomeStatus: "FAILURE",
+        reason: "Invoice payment validation failed",
+        errorCode: "VALIDATION_ERROR",
+      });
       return res.status(400).json({ error: "Amount must be a positive number" });
+    }
+
+    invoiceForAudit = await invoiceDb.getInvoice(req.pool, id);
+    if (!invoiceForAudit) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_PAYMENT_RECORDED",
+        action: "RECORD_PAYMENT",
+        category: "PAYMENT",
+        severity: "HIGH",
+        invoice: { id },
+        outcomeStatus: "FAILURE",
+        reason: "Invoice was not found",
+        errorCode: "INVOICE_NOT_FOUND",
+      });
+      return res.status(404).json({ error: "Invoice not found" });
     }
 
     const result = await invoiceDb.recordPayment(req.pool, id, {
@@ -699,9 +893,50 @@ exports.recordPayment = async (req, res) => {
       console.warn("[recordPayment] Failed to regenerate PDF after recording payment:", pdfError.message);
     }
 
+    await auditInvoiceEvent(req, {
+      eventType: "INVOICE_PAYMENT_RECORDED",
+      action: "RECORD_PAYMENT",
+      category: "PAYMENT",
+      severity: "HIGH",
+      invoice: result.invoice,
+      payment: result.invoicePayment,
+      changes: (() => {
+        const invoiceChanges = buildInvoiceChanges(invoiceForAudit, result.invoice);
+        const paymentChanges = buildPaymentChanges(null, result.invoicePayment);
+        return {
+          before: {
+            invoice: invoiceChanges.before,
+            payment: paymentChanges.before,
+          },
+          after: {
+            invoice: invoiceChanges.after,
+            payment: paymentChanges.after,
+          },
+        };
+      })(),
+      metadata: {
+        paymentAmount: Number(result.invoicePayment?.amount || amount),
+        paymentMethod: result.invoicePayment?.payment_method || payment_method || "",
+      },
+    });
+
     res.json(formatResponse(result));
   } catch (error) {
     console.error("[recordPayment] Error:", error.message, error.stack);
+    await auditInvoiceEvent(req, {
+      eventType: "INVOICE_PAYMENT_RECORDED",
+      action: "RECORD_PAYMENT",
+      category: "PAYMENT",
+      severity: "HIGH",
+      invoice: invoiceForAudit || { id: req.params?.id },
+      changes: {
+        before: null,
+        after: pickSafePaymentFields(req.body || {}),
+      },
+      outcomeStatus: "FAILURE",
+      reason: "Invoice payment recording failed",
+      errorCode: "INVOICE_PAYMENT_FAILED",
+    });
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -731,6 +966,8 @@ exports.generateBulkInvoices = async (req, res) => {
  * Get presigned URL for invoice PDF download by invoice ID
  */
 exports.getInvoicePDFDownloadUrl = async (req, res) => {
+  let invoiceForAudit = null;
+
   try {
     const { id } = req.params;
 
@@ -739,17 +976,55 @@ exports.getInvoicePDFDownloadUrl = async (req, res) => {
     }
 
     const invoice = await invoiceDb.getInvoice(req.pool, id);
+    invoiceForAudit = invoice;
 
     if (!invoice) {
+      if (req.user?.isAdmin) {
+        await auditInvoiceEvent(req, {
+          eventType: "INVOICE_PDF_ACCESSED",
+          action: "ACCESS_PDF",
+          category: "SENSITIVE_READ",
+          severity: "HIGH",
+          invoice: { id },
+          outcomeStatus: "FAILURE",
+          reason: "Invoice was not found",
+          errorCode: "INVOICE_NOT_FOUND",
+          metadata: { lookupType: "INVOICE_ID" },
+        });
+      }
       return res.status(404).json({ error: "Invoice not found" });
     }
 
     if (!invoice.invoice_number) {
+      if (req.user?.isAdmin) {
+        await auditInvoiceEvent(req, {
+          eventType: "INVOICE_PDF_ACCESSED",
+          action: "ACCESS_PDF",
+          category: "SENSITIVE_READ",
+          severity: "HIGH",
+          invoice,
+          outcomeStatus: "FAILURE",
+          reason: "Invoice PDF is not available",
+          errorCode: "INVOICE_PDF_NOT_AVAILABLE",
+          metadata: { lookupType: "INVOICE_ID" },
+        });
+      }
       return res.status(400).json({ error: "Invoice PDF not yet generated" });
     }
 
     const bucketName = process.env.INVOICE_BUCKET_NAME;
     const presignedUrl = await getInvoicePDFPresignedUrl(bucketName, invoice.invoice_number, 3600);
+
+    if (req.user?.isAdmin) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_PDF_ACCESSED",
+        action: "ACCESS_PDF",
+        category: "SENSITIVE_READ",
+        severity: "HIGH",
+        invoice,
+        metadata: { expiresInSeconds: 3600, lookupType: "INVOICE_ID" },
+      });
+    }
 
     res.json(
       formatResponse({
@@ -760,6 +1035,19 @@ exports.getInvoicePDFDownloadUrl = async (req, res) => {
     );
   } catch (error) {
     console.error("[getInvoicePDFDownloadUrl] Error:", error.message);
+    if (req.user?.isAdmin) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_PDF_ACCESSED",
+        action: "ACCESS_PDF",
+        category: "SENSITIVE_READ",
+        severity: "HIGH",
+        invoice: invoiceForAudit || { id: req.params?.id },
+        outcomeStatus: "FAILURE",
+        reason: "Invoice PDF access failed",
+        errorCode: "INVOICE_PDF_ACCESS_FAILED",
+        metadata: { lookupType: "INVOICE_ID" },
+      });
+    }
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -768,6 +1056,8 @@ exports.getInvoicePDFDownloadUrl = async (req, res) => {
  * Get presigned URL for invoice PDF download by order ID
  */
 exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
+  let invoiceForAudit = null;
+
   try {
     const { orderId } = req.params;
 
@@ -776,17 +1066,55 @@ exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
     }
 
     const invoice = await invoiceDb.getInvoiceByOrder(req.pool, orderId);
+    invoiceForAudit = invoice;
 
     if (!invoice || shouldHideInvoiceFromRequester(req, invoice)) {
+      if (req.user?.isAdmin) {
+        await auditInvoiceEvent(req, {
+          eventType: "INVOICE_PDF_ACCESSED",
+          action: "ACCESS_PDF",
+          category: "SENSITIVE_READ",
+          severity: "HIGH",
+          invoice: { order_id: orderId },
+          outcomeStatus: "FAILURE",
+          reason: "Invoice was not found",
+          errorCode: "INVOICE_NOT_FOUND",
+          metadata: { lookupType: "ORDER_ID" },
+        });
+      }
       return res.status(404).json({ error: "Invoice not found for this order" });
     }
 
     if (!invoice.invoice_number) {
+      if (req.user?.isAdmin) {
+        await auditInvoiceEvent(req, {
+          eventType: "INVOICE_PDF_ACCESSED",
+          action: "ACCESS_PDF",
+          category: "SENSITIVE_READ",
+          severity: "HIGH",
+          invoice,
+          outcomeStatus: "FAILURE",
+          reason: "Invoice PDF is not available",
+          errorCode: "INVOICE_PDF_NOT_AVAILABLE",
+          metadata: { lookupType: "ORDER_ID" },
+        });
+      }
       return res.status(400).json({ error: "Invoice PDF not yet generated" });
     }
 
     const bucketName = process.env.INVOICE_BUCKET_NAME;
     const presignedUrl = await getInvoicePDFPresignedUrl(bucketName, invoice.invoice_number, 3600);
+
+    if (req.user?.isAdmin) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_PDF_ACCESSED",
+        action: "ACCESS_PDF",
+        category: "SENSITIVE_READ",
+        severity: "HIGH",
+        invoice,
+        metadata: { expiresInSeconds: 3600, lookupType: "ORDER_ID" },
+      });
+    }
 
     res.json(
       formatResponse({
@@ -797,6 +1125,19 @@ exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
     );
   } catch (error) {
     console.error("[getInvoicePDFDownloadUrlByOrder] Error:", error.message);
+    if (req.user?.isAdmin) {
+      await auditInvoiceEvent(req, {
+        eventType: "INVOICE_PDF_ACCESSED",
+        action: "ACCESS_PDF",
+        category: "SENSITIVE_READ",
+        severity: "HIGH",
+        invoice: invoiceForAudit || { order_id: req.params?.orderId },
+        outcomeStatus: "FAILURE",
+        reason: "Invoice PDF access failed",
+        errorCode: "INVOICE_PDF_ACCESS_FAILED",
+        metadata: { lookupType: "ORDER_ID" },
+      });
+    }
     res.status(500).json({ error: "Internal server error" });
   }
 };

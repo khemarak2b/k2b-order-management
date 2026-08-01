@@ -98,6 +98,12 @@
             "INVOICE_BUCKET_NAME": {
               "Ref": "invoiceBucketName"
             },
+            "AUDIT_API_URL": {
+              "Fn::Sub": "{{resolve:ssm:AuditApiUrl-${env}}}"
+            },
+            "AUDIT_INGESTION_TOKEN_PARAMETER_NAME": {
+              "Fn::Sub": "AuditIngestionToken-${env}"
+            },
             "BYPASS_AUTH": "false"
           }
         },
@@ -215,6 +221,16 @@
               ],
               "Resource": {
                 "Fn::Sub": "arn:aws:s3:::${invoiceBucketName}/*"
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "ssm:GetParameter",
+                "ssm:GetParameters"
+              ],
+              "Resource": {
+                "Fn::Sub": "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/AuditIngestionToken-${env}"
               }
             }
           ]

@@ -74,6 +74,7 @@ exports.handler = async (event, context) => {
 
   try {
     extractAndInjectCognitoAuth(event, requestId);
+    injectAuditRequestContext(event, context);
 
     const response = await handler(event, context);
     return response;
@@ -82,3 +83,54 @@ exports.handler = async (event, context) => {
     throw error;
   }
 };
+
+function injectAuditRequestContext(event, context) {
+  const claims = event?.requestContext?.authorizer?.claims || {};
+  const tenantId =
+    claims.tenantId ||
+    claims.tenant_id ||
+    claims["custom:tenantId"] ||
+    claims["custom:tenant_id"];
+  const correlationId =
+    getEventHeader(event, "x-correlation-id") ||
+    event?.requestContext?.requestId ||
+    context?.awsRequestId;
+  const requestId = event?.requestContext?.requestId || context?.awsRequestId;
+
+  setTrustedHeader(event, "x-k2b-audit-tenant-id", tenantId);
+  setTrustedHeader(event, "x-k2b-audit-request-id", requestId);
+
+  if (correlationId) {
+    setEventHeader(event, "x-correlation-id", correlationId);
+  }
+}
+
+function getEventHeader(event, name) {
+  const headers = event?.headers || {};
+  const matchedKey = Object.keys(headers).find(
+    (key) => key.toLowerCase() === name.toLowerCase(),
+  );
+  return matchedKey ? headers[matchedKey] : "";
+}
+
+function setTrustedHeader(event, name, value) {
+  deleteEventHeader(event, name);
+  if (value !== undefined && value !== null && value !== "") {
+    setEventHeader(event, name, String(value));
+  }
+}
+
+function setEventHeader(event, name, value) {
+  event.headers = event.headers || {};
+  deleteEventHeader(event, name);
+  event.headers[name] = value;
+}
+
+function deleteEventHeader(event, name) {
+  if (!event?.headers) return;
+  for (const key of Object.keys(event.headers)) {
+    if (key.toLowerCase() === name.toLowerCase()) {
+      delete event.headers[key];
+    }
+  }
+}

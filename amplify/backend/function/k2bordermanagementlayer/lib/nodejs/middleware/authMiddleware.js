@@ -31,11 +31,12 @@ const authMiddleware = async (req, res, next) => {
     // Look up database user ID from Cognito sub
     let userId;
     let isAdmin = false;
+    let adminUser = null;
     try {
       userId = await getUserIdByCognitoSub(req.pool, userSub);
       
       // Check if user is an admin
-      const adminUser = await getAdminUserByCognitoSub(req.pool, userSub);
+      adminUser = await getAdminUserByCognitoSub(req.pool, userSub);
       if (adminUser) {
         isAdmin = true;
       }
@@ -50,6 +51,17 @@ const authMiddleware = async (req, res, next) => {
       id: userId,
       cognitoAuthProvider,
       isAdmin,
+      ...(adminUser
+        ? {
+            adminId: adminUser.id,
+            role: adminUser.role,
+            email: adminUser.email || "",
+            name:
+              [adminUser.first_name, adminUser.last_name]
+                .filter(Boolean)
+                .join(" ") || adminUser.email || "",
+          }
+        : {}),
     };
 
     next();
