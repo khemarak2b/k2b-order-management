@@ -80,7 +80,14 @@
             },
             "DB_SECRET_ARN": {
               "Ref": "databaseSecretArn"
-            }
+            },
+            "AUDIT_API_URL": {
+              "Fn::Sub": "{{resolve:ssm:AuditApiUrl-${env}}}"
+            },
+            "AUDIT_INGESTION_TOKEN_PARAMETER_NAME": {
+              "Fn::Sub": "AuditIngestionToken-${env}"
+            },
+            "AUDIT_TIMEOUT_MS": "1500"
           }
         },
         "Role": {
@@ -184,6 +191,13 @@
               ],
               "Resource": {
                 "Ref": "databaseSecretArn"
+              }
+            },
+            {
+              "Effect": "Allow",
+              "Action": ["ssm:GetParameter"],
+              "Resource": {
+                "Fn::Sub": "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/AuditIngestionToken-${env}"
               }
             }
           ]

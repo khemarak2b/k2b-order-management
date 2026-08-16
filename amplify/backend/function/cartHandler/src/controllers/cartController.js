@@ -1,6 +1,11 @@
 const cartDb = require("../db/cart");
 const { formatResponse } = require("/opt/nodejs/utils/responseFormatter");
 const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
+const {
+  auditCartEvent,
+  buildCartItemChanges,
+  findCartItem,
+} = require("../audit/cartAudit");
 
 exports.getCart = async (req, res) => {
   try {
@@ -31,11 +36,19 @@ exports.deleteCart = async (req, res) => {
       return res.status(400).json({ error: "User ID is required" });
     }
 
+    const cart = await cartDb.getCart(req.pool, userId);
     const deleted = await cartDb.deleteCart(req.pool, userId);
 
     if (!deleted) {
       return res.status(404).json({ error: "Cart not found" });
     }
+
+    await auditCartEvent(req, {
+      eventType: "CART_DELETED",
+      action: "DELETE",
+      cart,
+      metadata: { itemCount: cart?.items?.length || 0 },
+    });
 
     res.status(204).send();
   } catch (error) {
@@ -46,7 +59,6 @@ exports.deleteCart = async (req, res) => {
 
 exports.createCart = async (req, res) => {
   try {
-    console.log("[createCart] Request body:", JSON.stringify(req.body));
     const { cart, cartItems } = req.body;
     const { userId } = cart || {};
 
@@ -59,10 +71,30 @@ exports.createCart = async (req, res) => {
       cart_items: Array.isArray(cartItems) ? cartItems.map((item) => toSnakeCase(item)) : [],
     };
 
-    console.log("[createCart] Creating cart with data:", JSON.stringify(dbData));
     const result = await cartDb.createCart(req.pool, dbData);
-    console.log("[createCart] cart created successfully:", JSON.stringify(result));
-    res.status(201).json(formatResponse(result));
+    const { cartCreated, ...responseResult } = result;
+
+    if (cartCreated) {
+      await auditCartEvent(req, {
+        eventType: "CART_CREATED",
+        action: "CREATE",
+        cart: result.cart,
+        metadata: { itemCount: result.items.length },
+      });
+    }
+
+    for (const item of result.items) {
+      await auditCartEvent(req, {
+        eventType: "CART_ITEM_ADDED",
+        action: "ADD_ITEM",
+        resourceType: "CART_ITEM",
+        cart: result.cart,
+        item,
+        changes: buildCartItemChanges(null, item),
+      });
+    }
+
+    res.status(201).json(formatResponse(responseResult));
   } catch (error) {
     console.error("[createCart] Error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
@@ -71,7 +103,6 @@ exports.createCart = async (req, res) => {
 
 exports.addCartItem = async (req, res) => {
   try {
-    console.log("[addCartItem] Request body:", JSON.stringify(req.body));
     const { userId } = req.params;
     const itemData = req.body;
 
@@ -83,10 +114,28 @@ exports.addCartItem = async (req, res) => {
       return res.status(400).json({ error: "Item data is required" });
     }
 
+    const existingCart = await cartDb.getCart(req.pool, userId);
     const dbData = toSnakeCase(itemData);
-    console.log("[addCartItem] Adding item:", JSON.stringify(dbData));
     const item = await cartDb.addCartItem(req.pool, userId, dbData);
-    console.log("[addCartItem] Item added successfully:", JSON.stringify(item));
+
+    if (!existingCart) {
+      await auditCartEvent(req, {
+        eventType: "CART_CREATED",
+        action: "CREATE",
+        cart: { id: item.cart_id, user_id: userId },
+        metadata: { createdImplicitly: true, itemCount: 1 },
+      });
+    }
+
+    await auditCartEvent(req, {
+      eventType: "CART_ITEM_ADDED",
+      action: "ADD_ITEM",
+      resourceType: "CART_ITEM",
+      cart: { id: item.cart_id, user_id: userId },
+      item,
+      changes: buildCartItemChanges(null, item),
+    });
+
     res.status(201).json(formatResponse(item));
   } catch (error) {
     console.error("[addCartItem] Error:", error.message, error.stack);
@@ -96,7 +145,6 @@ exports.addCartItem = async (req, res) => {
 
 exports.updateCartItem = async (req, res) => {
   try {
-    console.log("[updateCartItem] Request body:", JSON.stringify(req.body));
     const { userId, itemId } = req.params;
     const updateData = req.body;
 
@@ -108,10 +156,24 @@ exports.updateCartItem = async (req, res) => {
       return res.status(400).json({ error: "Update data is required" });
     }
 
+    const cart = await cartDb.getCart(req.pool, userId);
+    const previousItem = findCartItem(cart, itemId);
+    if (!previousItem) {
+      return res.status(404).json({ error: "Cart item not found" });
+    }
+
     const dbData = toSnakeCase(updateData);
-    console.log("[updateCartItem] Updating item:", JSON.stringify(dbData));
     const item = await cartDb.updateCartItem(req.pool, itemId, dbData);
-    console.log("[updateCartItem] Item updated successfully:", JSON.stringify(item));
+
+    await auditCartEvent(req, {
+      eventType: "CART_ITEM_UPDATED",
+      action: "UPDATE_ITEM",
+      resourceType: "CART_ITEM",
+      cart,
+      item,
+      changes: buildCartItemChanges(previousItem, item),
+    });
+
     res.status(200).json(formatResponse(item));
   } catch (error) {
     console.error("[updateCartItem] Error:", error.message, error.stack);
@@ -130,11 +192,26 @@ exports.deleteCartItem = async (req, res) => {
       return res.status(400).json({ error: "User ID and Item ID are required" });
     }
 
+    const cart = await cartDb.getCart(req.pool, userId);
+    const item = findCartItem(cart, itemId);
+    if (!item) {
+      return res.status(404).json({ error: "Cart item not found" });
+    }
+
     const deleted = await cartDb.deleteCartItem(req.pool, itemId);
 
     if (!deleted) {
       return res.status(404).json({ error: "Cart item not found" });
     }
+
+    await auditCartEvent(req, {
+      eventType: "CART_ITEM_REMOVED",
+      action: "REMOVE_ITEM",
+      resourceType: "CART_ITEM",
+      cart,
+      item,
+      changes: buildCartItemChanges(item, null),
+    });
 
     res.status(204).send();
   } catch (error) {

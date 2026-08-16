@@ -144,7 +144,7 @@ function buildActor(req) {
     id: String(user.adminId || user.id || user.sub),
     type: isAdmin ? "ADMIN" : "CUSTOMER",
     email: user.email || "",
-    name: user.name || user.email || "",
+    name: isAdmin ? user.name || user.email || "" : "",
     roles: user.role ? [user.role] : user.roles || [],
   };
 }

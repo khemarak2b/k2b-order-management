@@ -979,9 +979,9 @@ exports.getInvoicePDFDownloadUrl = async (req, res) => {
     invoiceForAudit = invoice;
 
     if (!invoice) {
-      if (req.user?.isAdmin) {
+      if (req.user) {
         await auditInvoiceEvent(req, {
-          eventType: "INVOICE_PDF_ACCESSED",
+          eventType: getInvoicePdfEventType(req),
           action: "ACCESS_PDF",
           category: "SENSITIVE_READ",
           severity: "HIGH",
@@ -996,9 +996,9 @@ exports.getInvoicePDFDownloadUrl = async (req, res) => {
     }
 
     if (!invoice.invoice_number) {
-      if (req.user?.isAdmin) {
+      if (req.user) {
         await auditInvoiceEvent(req, {
-          eventType: "INVOICE_PDF_ACCESSED",
+          eventType: getInvoicePdfEventType(req),
           action: "ACCESS_PDF",
           category: "SENSITIVE_READ",
           severity: "HIGH",
@@ -1015,9 +1015,9 @@ exports.getInvoicePDFDownloadUrl = async (req, res) => {
     const bucketName = process.env.INVOICE_BUCKET_NAME;
     const presignedUrl = await getInvoicePDFPresignedUrl(bucketName, invoice.invoice_number, 3600);
 
-    if (req.user?.isAdmin) {
+    if (req.user) {
       await auditInvoiceEvent(req, {
-        eventType: "INVOICE_PDF_ACCESSED",
+        eventType: getInvoicePdfEventType(req),
         action: "ACCESS_PDF",
         category: "SENSITIVE_READ",
         severity: "HIGH",
@@ -1035,9 +1035,9 @@ exports.getInvoicePDFDownloadUrl = async (req, res) => {
     );
   } catch (error) {
     console.error("[getInvoicePDFDownloadUrl] Error:", error.message);
-    if (req.user?.isAdmin) {
+    if (req.user) {
       await auditInvoiceEvent(req, {
-        eventType: "INVOICE_PDF_ACCESSED",
+        eventType: getInvoicePdfEventType(req),
         action: "ACCESS_PDF",
         category: "SENSITIVE_READ",
         severity: "HIGH",
@@ -1069,9 +1069,9 @@ exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
     invoiceForAudit = invoice;
 
     if (!invoice || shouldHideInvoiceFromRequester(req, invoice)) {
-      if (req.user?.isAdmin) {
+      if (req.user) {
         await auditInvoiceEvent(req, {
-          eventType: "INVOICE_PDF_ACCESSED",
+          eventType: getInvoicePdfEventType(req),
           action: "ACCESS_PDF",
           category: "SENSITIVE_READ",
           severity: "HIGH",
@@ -1086,9 +1086,9 @@ exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
     }
 
     if (!invoice.invoice_number) {
-      if (req.user?.isAdmin) {
+      if (req.user) {
         await auditInvoiceEvent(req, {
-          eventType: "INVOICE_PDF_ACCESSED",
+          eventType: getInvoicePdfEventType(req),
           action: "ACCESS_PDF",
           category: "SENSITIVE_READ",
           severity: "HIGH",
@@ -1105,9 +1105,9 @@ exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
     const bucketName = process.env.INVOICE_BUCKET_NAME;
     const presignedUrl = await getInvoicePDFPresignedUrl(bucketName, invoice.invoice_number, 3600);
 
-    if (req.user?.isAdmin) {
+    if (req.user) {
       await auditInvoiceEvent(req, {
-        eventType: "INVOICE_PDF_ACCESSED",
+        eventType: getInvoicePdfEventType(req),
         action: "ACCESS_PDF",
         category: "SENSITIVE_READ",
         severity: "HIGH",
@@ -1125,9 +1125,9 @@ exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
     );
   } catch (error) {
     console.error("[getInvoicePDFDownloadUrlByOrder] Error:", error.message);
-    if (req.user?.isAdmin) {
+    if (req.user) {
       await auditInvoiceEvent(req, {
-        eventType: "INVOICE_PDF_ACCESSED",
+        eventType: getInvoicePdfEventType(req),
         action: "ACCESS_PDF",
         category: "SENSITIVE_READ",
         severity: "HIGH",
@@ -1144,6 +1144,12 @@ exports.getInvoicePDFDownloadUrlByOrder = async (req, res) => {
 
 function shouldHideInvoiceFromRequester(req, invoice) {
   return req.isCustomerInvoiceRequest === true && !isInvoiceVisibleToCustomer(invoice);
+}
+
+function getInvoicePdfEventType(req) {
+  return req.user?.isAdmin
+    ? "INVOICE_PDF_ACCESSED"
+    : "CUSTOMER_INVOICE_PDF_ACCESSED";
 }
 
 function isInvoiceVisibleToCustomer(invoice) {

@@ -3,6 +3,11 @@ const { formatResponse } = require("/opt/nodejs/utils/responseFormatter");
 const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { generateFormattedOrderId } = require("../utils/idGenerator");
 const { sendNotification } = require("../utils/notificationService");
+const {
+  auditCustomerOrderEvent,
+  buildOrderChanges,
+  buildPaymentChanges,
+} = require("../audit/customerOrderAudit");
 
 exports.getOrder = async (req, res) => {
   try {
@@ -12,7 +17,7 @@ exports.getOrder = async (req, res) => {
       return res.status(400).json({ error: "Order ID is required" });
     }
 
-    const order = await orderDb.getOrder(req.pool, id);
+    const order = req.resource || (await orderDb.getOrder(req.pool, id));
 
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -76,7 +81,20 @@ exports.deleteOrder = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    await orderDb.deleteOrder(req.pool, id);
+    const deleted = await orderDb.deleteOrder(req.pool, id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    await auditCustomerOrderEvent(req, {
+      eventType: "CUSTOMER_ORDER_DELETED",
+      action: "DELETE",
+      severity: "HIGH",
+      order,
+      changes: buildOrderChanges(order, null),
+      metadata: { itemCount: order.items?.length || order.order_items?.length || 0 },
+    });
+
     res.status(204).send();
   } catch (error) {
     console.error(error);
@@ -86,7 +104,6 @@ exports.deleteOrder = async (req, res) => {
 
 exports.createOrder = async (req, res) => {
   try {
-    console.log("[createOrder] Request body:", JSON.stringify(req.body));
     const {
       userId,
       subtotal,
@@ -135,9 +152,7 @@ exports.createOrder = async (req, res) => {
       order_items: Array.isArray(finalOrderItems) ? finalOrderItems.map((item) => toSnakeCase(item)) : [],
     };
 
-    console.log("[createOrder] Creating Order with data:", JSON.stringify(order));
     const result = await orderDb.createOrder(req.pool, order);
-    console.log("[createOrder] Order created successfully:", JSON.stringify(result));
 
     // Send order confirmation email
     try {
@@ -154,6 +169,15 @@ exports.createOrder = async (req, res) => {
       console.warn("[createOrder] Failed to clear cart:", err.message);
     }
 
+    await auditCustomerOrderEvent(req, {
+      eventType: "CUSTOMER_ORDER_CREATED",
+      action: "CREATE",
+      severity: "MEDIUM",
+      order: result.order,
+      changes: buildOrderChanges(null, result.order),
+      metadata: { itemCount: result.items?.length || 0 },
+    });
+
     res.status(201).json(formatResponse(result));
   } catch (error) {
     console.error("[createOrder] Error:", error.message, error.stack);
@@ -163,7 +187,6 @@ exports.createOrder = async (req, res) => {
 
 exports.updateOrder = async (req, res) => {
   try {
-    console.log("[updateOrder] Request body:", JSON.stringify(req.body));
     const { id } = req.params;
     const { status } = req.body;
 
@@ -177,13 +200,13 @@ exports.updateOrder = async (req, res) => {
       return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
     }
 
+    const currentOrder = req.resource || (await orderDb.getOrder(req.pool, id));
+    if (!currentOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
     // Get current order to validate transition
     if (status) {
-      const currentOrder = await orderDb.getOrder(req.pool, id);
-      if (!currentOrder) {
-        return res.status(404).json({ error: "Order not found" });
-      }
-
       const validTransitions = {
         pending: ["processing", "cancelled"],
         processing: ["shipped", "cancelled"],
@@ -201,9 +224,19 @@ exports.updateOrder = async (req, res) => {
     }
 
     const dbData = toSnakeCase({ ...req.body, id });
-    console.log("[updateOrder] Updating Order with data:", JSON.stringify(dbData));
     const order = await orderDb.updateOrder(req.pool, dbData);
-    console.log("[updateOrder] Order updated successfully:", JSON.stringify(order));
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    await auditCustomerOrderEvent(req, {
+      eventType: "CUSTOMER_ORDER_UPDATED",
+      action: "UPDATE",
+      severity: "MEDIUM",
+      order,
+      changes: buildOrderChanges(currentOrder, order),
+    });
+
     res.status(200).json(formatResponse(order));
   } catch (error) {
     console.error("[updateOrder] Error:", error.message, error.stack);
@@ -215,7 +248,6 @@ exports.updateOrder = async (req, res) => {
 
 exports.createPayment = async (req, res) => {
   try {
-    console.log("[createPayment] Request body:", JSON.stringify(req.body));
     const { orderId } = req.params;
     const { paymentMethod, amount, paymentDetails } = req.body;
 
@@ -233,7 +265,7 @@ exports.createPayment = async (req, res) => {
     }
 
     // Verify order exists
-    const order = await orderDb.getOrder(req.pool, orderId);
+    const order = req.resource || (await orderDb.getOrder(req.pool, orderId));
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
@@ -245,7 +277,17 @@ exports.createPayment = async (req, res) => {
       status: "pending",
       payment_details: paymentDetails || null,
     });
-    console.log("[createPayment] Payment created successfully:", JSON.stringify(payment));
+    await auditCustomerOrderEvent(req, {
+      eventType: "CUSTOMER_ORDER_PAYMENT_CREATED",
+      action: "CREATE_PAYMENT",
+      category: "PAYMENT",
+      severity: "HIGH",
+      resourceType: "PAYMENT",
+      order,
+      payment,
+      changes: buildPaymentChanges(null, payment),
+    });
+
     res.status(201).json(formatResponse(payment));
   } catch (error) {
     console.error("[createPayment] Error:", error.message, error.stack);
@@ -292,7 +334,6 @@ exports.getPayment = async (req, res) => {
 
 exports.updatePayment = async (req, res) => {
   try {
-    console.log("[updatePayment] Request body:", JSON.stringify(req.body));
     const { orderId, paymentId } = req.params;
     const { status } = req.body;
 
@@ -315,9 +356,10 @@ exports.updatePayment = async (req, res) => {
     }
 
     const dbData = { id: paymentId, ...toSnakeCase(req.body) };
-    console.log("[updatePayment] Updating payment with data:", JSON.stringify(dbData));
     const updatedPayment = await orderDb.updatePayment(req.pool, dbData);
-    console.log("[updatePayment] Payment updated successfully:", JSON.stringify(updatedPayment));
+    if (!updatedPayment) {
+      return res.status(404).json({ error: "Payment not found" });
+    }
 
     // If payment is completed, update order status to processing and send SQS notification
     if (status === "completed" && payment.status !== "completed") {
@@ -332,6 +374,23 @@ exports.updatePayment = async (req, res) => {
         // Don't fail the request if notification fails
       }
     }
+
+    await auditCustomerOrderEvent(req, {
+      eventType: "CUSTOMER_ORDER_PAYMENT_UPDATED",
+      action: "UPDATE_PAYMENT",
+      category: "PAYMENT",
+      severity: "HIGH",
+      resourceType: "PAYMENT",
+      order: req.resource,
+      payment: updatedPayment,
+      changes: buildPaymentChanges(payment, updatedPayment),
+      metadata: {
+        orderStatusChangedTo:
+          status === "completed" && payment.status !== "completed"
+            ? "processing"
+            : "",
+      },
+    });
 
     res.json(formatResponse(updatedPayment));
   } catch (error) {

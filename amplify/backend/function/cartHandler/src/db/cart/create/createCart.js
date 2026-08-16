@@ -16,6 +16,7 @@ const createCart = async (pool, data) => {
 
     let cartId;
     let cart;
+    let cartCreated = false;
 
     if (existingCartResult.rows.length > 0) {
       // Cart exists, use existing cart
@@ -36,6 +37,7 @@ const createCart = async (pool, data) => {
       const resultCarts = await client.query(queryCart, valuesCart);
       cart = resultCarts.rows[0];
       cartId = cart.id;
+      cartCreated = true;
     }
 
     /* ---------- INSERT CART ITEMS ---------- */
@@ -79,6 +81,7 @@ const createCart = async (pool, data) => {
     return {
       cart,
       items,
+      cartCreated,
     };
   } catch (err) {
     await client.query("ROLLBACK");
