@@ -3,6 +3,7 @@ const { formatResponse } = require("/opt/nodejs/utils/responseFormatter");
 const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { generateFormattedOrderId } = require("../utils/idGenerator");
 const { sendNotification } = require("../utils/notificationService");
+const { notifyCustomerOfOrderUpdate } = require("/opt/nodejs/utils/orderUpdateNotification");
 const {
   auditCustomerOrderEvent,
   buildOrderChanges,
@@ -235,6 +236,14 @@ exports.updateOrder = async (req, res) => {
       severity: "MEDIUM",
       order,
       changes: buildOrderChanges(currentOrder, order),
+    });
+
+    await notifyCustomerOfOrderUpdate({
+      pool: req.pool,
+      previousOrder: currentOrder,
+      updatedOrder: order,
+      sendNotification,
+      source: "customer-order-update",
     });
 
     res.status(200).json(formatResponse(order));

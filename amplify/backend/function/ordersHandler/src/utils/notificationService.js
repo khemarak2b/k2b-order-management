@@ -39,9 +39,20 @@ async function sendNotification(payload) {
     subject: payload.subject,
     template: payload.template,
     data: payload.data || {},
+    ...(payload.messageGroupId ? { messageGroupId: payload.messageGroupId } : {}),
+    ...(payload.messageDeduplicationId
+      ? { messageDeduplicationId: payload.messageDeduplicationId }
+      : {}),
   };
 
-  console.log("[sendNotification] Sending notification:", JSON.stringify(message));
+  console.log(
+    JSON.stringify({
+      component: "notification-api-client",
+      event: "enqueue-requested",
+      template: message.template,
+      messageGroupId: message.messageGroupId,
+    }),
+  );
 
   try {
     const response = await fetch(`${notificationApiUrl}/email`, {
@@ -54,9 +65,24 @@ async function sendNotification(payload) {
       throw new Error(`Notification API error: ${response.status} ${response.statusText}`);
     }
 
-    console.log("[sendNotification] Notification sent successfully");
+    console.log(
+      JSON.stringify({
+        component: "notification-api-client",
+        event: "enqueue-accepted",
+        template: message.template,
+        messageGroupId: message.messageGroupId,
+      }),
+    );
   } catch (error) {
-    console.error("[sendNotification] Failed to send notification:", error);
+    console.error(
+      JSON.stringify({
+        component: "notification-api-client",
+        event: "enqueue-failed",
+        template: message.template,
+        messageGroupId: message.messageGroupId,
+        error: error.message,
+      }),
+    );
     throw error;
   }
 }

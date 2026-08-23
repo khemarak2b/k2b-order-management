@@ -2,6 +2,9 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "scripts": {
+    "test": "node test/orderUpdateNotification.test.js"
+  },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.0.0",
     "@aws-sdk/client-ssm": "^3.0.0",
