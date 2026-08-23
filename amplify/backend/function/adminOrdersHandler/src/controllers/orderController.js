@@ -313,7 +313,7 @@ exports.updateOrder = async (req, res) => {
   try {
     console.log("[updateOrder] Request body:", JSON.stringify(req.body));
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, trackingUrl } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: "Order ID is required" });
