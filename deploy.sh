@@ -66,6 +66,12 @@ aws s3api get-object --bucket $BUCKET_NAME \
 cp "${K2B_NOTIFICATION_MANAGEMENT}-aws-exports.js" ./amplify/backend/function/ordersHandler/src
 cp "${K2B_NOTIFICATION_MANAGEMENT}-aws-exports.js" ./amplify/backend/function/adminOrdersHandler/src
 
+K2B_PRODUCT_MANAGEMENT="k2b-product-management"
+
+aws s3api get-object --bucket $BUCKET_NAME \
+--key "${DEPLOYMENT_ENV}/${K2B_PRODUCT_MANAGEMENT}/${K2B_PRODUCT_MANAGEMENT}-aws-exports.js" "${K2B_PRODUCT_MANAGEMENT}-aws-exports.js"
+cp "${K2B_PRODUCT_MANAGEMENT}-aws-exports.js" ./amplify/backend/function/adminOrdersHandler/src
+
 
 # Try to download team-provider-info.json from S3
 echo "Attempting to download team-provider-info.json from S3..."
