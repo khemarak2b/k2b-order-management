@@ -4,6 +4,7 @@ const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { generateFormattedOrderId } = require("../utils/idGenerator");
 const { sendNotification } = require("../utils/notificationService");
 const { notifyCustomerOfOrderUpdate } = require("/opt/nodejs/utils/orderUpdateNotification");
+const { adjustShopifyInventoryForOrder } = require("../utils/inventoryAdjustmentService");
 const { getAdminChangeReason } = require("../constants/changeLog");
 const {
   auditAdminOrderEvent,
@@ -332,10 +333,19 @@ exports.updateOrder = async (req, res) => {
         return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
       }
 
+      // "shipped" can only be reached via PUT /admin-orders/:id/fulfill, which
+      // also records the Shopify location(s) fulfilling each item and
+      // decrements Shopify inventory accordingly.
+      if (status === "shipped") {
+        return res.status(400).json({
+          error: "Use PUT /admin-orders/:id/fulfill to transition an order to shipped",
+        });
+      }
+
       // Validate transition
       const validTransitions = {
         pending: ["processing", "cancelled"],
-        processing: ["shipped", "cancelled"],
+        processing: ["cancelled"],
         shipped: ["delivered"],
         delivered: ["refunded"],
         cancelled: [],
@@ -386,6 +396,96 @@ exports.updateOrder = async (req, res) => {
     res.status(200).json(formatResponse(order));
   } catch (error) {
     console.error("[updateOrder] Error:", error.message, error.stack);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+exports.fulfillOrder = async (req, res) => {
+  try {
+    console.log("[fulfillOrder] Request body:", JSON.stringify(req.body));
+    const { id } = req.params;
+    const { trackingNumber, trackingUrl, items } = req.body || {};
+
+    if (!id) {
+      return res.status(400).json({ error: "Order ID is required" });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: "items array is required" });
+    }
+
+    if (trackingUrl) {
+      try {
+        new URL(trackingUrl);
+      } catch {
+        return res.status(400).json({ error: "Invalid tracking URL format" });
+      }
+    }
+
+    const currentOrder = await orderDb.getOrder(req.pool, id);
+    if (!currentOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const order = await orderDb.fulfillOrder(req.pool, {
+      orderId: id,
+      trackingNumber,
+      trackingUrl,
+      items,
+    });
+
+    await auditAdminOrderEvent(req, {
+      eventType: "ADMIN_ORDER_FULFILLED",
+      action: "UPDATE",
+      severity: "MEDIUM",
+      order,
+      changes: {
+        before: { status: currentOrder.status },
+        after: { status: "shipped" },
+      },
+      metadata: {
+        previousStatus: currentOrder.status,
+        newStatus: "shipped",
+        itemCount: items.length,
+      },
+    });
+
+    await notifyCustomerOfOrderUpdate({
+      pool: req.pool,
+      previousOrder: currentOrder,
+      updatedOrder: order,
+      sendNotification,
+      source: "admin-order-fulfillment",
+    });
+
+    try {
+      const inventoryItems = items.flatMap((item) =>
+        (item.splits || []).map((split) => ({
+          variantId: item.variantId,
+          shopifyLocationId: split.shopifyLocationId,
+          quantity: split.quantity,
+        })),
+      );
+
+      await adjustShopifyInventoryForOrder({
+        orderId: order.id,
+        orderNumber: order.order_number,
+        items: inventoryItems,
+      });
+    } catch (error) {
+      // adjustShopifyInventoryForOrder already swallows its own errors; this
+      // catch is defense-in-depth only, so a Shopify hiccup never fails a
+      // fulfillment that already succeeded locally.
+      console.error("[fulfillOrder] Shopify inventory adjustment failed unexpectedly:", error.message);
+    }
+
+    res.status(200).json(formatResponse(order));
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
+    console.error("[fulfillOrder] Error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
   }
 };

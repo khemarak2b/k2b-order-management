@@ -57,6 +57,7 @@ router.get("/user/:userId", requireUserIdMatchOrAdminMiddleware, orderController
 router.post("/", orderController.createOrder);
 router.patch("/:orderId/items/:itemId", requirePaymentOrderOwnershipOrAdmin, orderController.updateOrderItemQuantity);
 router.put("/:id", requireOrderOwnershipOrAdmin, orderController.updateOrder);
+router.put("/:id/fulfill", requireOrderOwnershipOrAdmin, orderController.fulfillOrder);
 router.delete("/:id", requireOrderOwnershipOrAdmin, orderController.deleteOrder);
 router.get("/:id", requireOrderOwnershipOrAdmin, orderController.getOrder);
 
