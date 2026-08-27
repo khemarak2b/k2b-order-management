@@ -73,4 +73,31 @@ async function adjustShopifyInventoryForOrder({ orderId, orderNumber, items }) {
   }
 }
 
-module.exports = { adjustShopifyInventoryForOrder };
+/**
+ * Fetch Shopify's live available quantity per variant, for order-creation
+ * stock validation. Unlike adjustShopifyInventoryForOrder, this DOES throw on
+ * failure — it's a blocking validation gate, not a best-effort side effect,
+ * so the caller should treat a failure here as "can't verify stock" and
+ * refuse to create the order rather than silently allowing it through.
+ *
+ * @param {number[]} variantIds
+ * @returns {Promise<Array<{variantId: number, tracked: boolean, availableQuantity: number|null}>>}
+ */
+async function getLiveStockForVariants(variantIds) {
+  const apiUrl = getProductManagementApiUrl();
+  const token = await getInventoryAdjustToken();
+
+  const response = await fetch(`${apiUrl}/inventory-adjustments/live-stock`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Inventory-Adjust-Token": token },
+    body: JSON.stringify({ variantIds }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Live stock check failed: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+module.exports = { adjustShopifyInventoryForOrder, getLiveStockForVariants };

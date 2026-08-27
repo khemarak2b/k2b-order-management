@@ -87,7 +87,10 @@
             "AUDIT_INGESTION_TOKEN_PARAMETER_NAME": {
               "Fn::Sub": "AuditIngestionToken-${env}"
             },
-            "AUDIT_TIMEOUT_MS": "1500"
+            "AUDIT_TIMEOUT_MS": "1500",
+            "SHOPIFY_INVENTORY_ADJUST_TOKEN_PARAMETER_NAME": {
+              "Fn::Sub": "ShopifyInventoryAdjustToken-${env}"
+            }
           }
         },
         "Role": {
@@ -195,10 +198,15 @@
             },
             {
               "Effect": "Allow",
-              "Action": ["ssm:GetParameter"],
-              "Resource": {
-                "Fn::Sub": "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/AuditIngestionToken-${env}"
-              }
+              "Action": ["ssm:GetParameter", "ssm:GetParameters"],
+              "Resource": [
+                {
+                  "Fn::Sub": "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/AuditIngestionToken-${env}"
+                },
+                {
+                  "Fn::Sub": "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/ShopifyInventoryAdjustToken-${env}"
+                }
+              ]
             }
           ]
         }

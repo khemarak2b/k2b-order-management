@@ -5,6 +5,7 @@ const { generateFormattedOrderId } = require("../utils/idGenerator");
 const { sendNotification } = require("../utils/notificationService");
 const { notifyCustomerOfOrderUpdate } = require("/opt/nodejs/utils/orderUpdateNotification");
 const { adjustShopifyInventoryForOrder } = require("../utils/inventoryAdjustmentService");
+const { validateStockAvailability } = require("../utils/stockValidationService");
 const { getAdminChangeReason } = require("../constants/changeLog");
 const {
   auditAdminOrderEvent,
@@ -201,6 +202,8 @@ exports.createOrder = async (req, res) => {
       });
     }
 
+    await validateStockAvailability(req.pool, items);
+
     if (pricingProfileId) {
       const profileAccessResult = await req.pool.query(
         `
@@ -276,6 +279,10 @@ exports.createOrder = async (req, res) => {
 
     res.status(201).json(formatResponse(fullOrder || result.order));
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
     console.error("[admin createOrder] Error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
   }

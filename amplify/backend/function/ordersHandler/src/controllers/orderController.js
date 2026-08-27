@@ -3,6 +3,7 @@ const { formatResponse } = require("/opt/nodejs/utils/responseFormatter");
 const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { generateFormattedOrderId } = require("../utils/idGenerator");
 const { sendNotification } = require("../utils/notificationService");
+const { validateStockAvailability } = require("../utils/stockValidationService");
 const { notifyCustomerOfOrderUpdate } = require("/opt/nodejs/utils/orderUpdateNotification");
 const {
   auditCustomerOrderEvent,
@@ -137,6 +138,8 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ error: "shippingAddress is required" });
     }
 
+    await validateStockAvailability(req.pool, finalOrderItems);
+
     const order = {
       user_id: userId,
       order_number: generateFormattedOrderId(),
@@ -181,6 +184,10 @@ exports.createOrder = async (req, res) => {
 
     res.status(201).json(formatResponse(result));
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+
     console.error("[createOrder] Error:", error.message, error.stack);
     res.status(500).json({ error: "Internal server error" });
   }
