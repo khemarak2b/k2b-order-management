@@ -32,20 +32,40 @@ async function validateStockAvailability(pool, items) {
 
     const sellable = stock.availableQuantity - (reserved.get(variantId) || 0);
     if (Number(item.quantity) > sellable) {
-      insufficient.push({ variantId, requested: Number(item.quantity), available: Math.max(0, sellable) });
+      insufficient.push({
+        variantId,
+        label: describeItem(item),
+        requested: Number(item.quantity),
+        available: Math.max(0, sellable),
+      });
     }
   }
 
   if (insufficient.length > 0) {
-    const error = new Error(
-      insufficient
-        .map((i) => `Only ${i.available} unit(s) available for variant ${i.variantId} (requested ${i.requested})`)
-        .join("; "),
-    );
+    const message =
+      insufficient.length === 1
+        ? buildShortageMessage(insufficient[0])
+        : `Some items don't have enough stock: ${insufficient.map(buildShortageMessage).join("; ")}`;
+
+    const error = new Error(message);
     error.statusCode = 409;
     error.details = insufficient;
     throw error;
   }
+}
+
+function describeItem(item) {
+  if (item.productName && item.variantTitle && item.variantTitle !== item.productName) {
+    return `${item.productName} (${item.variantTitle})`;
+  }
+  return item.productName || `this item`;
+}
+
+function buildShortageMessage({ label, available, requested }) {
+  if (available <= 0) {
+    return `"${label}" is out of stock`;
+  }
+  return `Only ${available} of "${label}" ${available === 1 ? "is" : "are"} available (you requested ${requested})`;
 }
 
 module.exports = { validateStockAvailability };
