@@ -15,29 +15,9 @@ const {
 } = require("/opt/nodejs/middleware/roleAuthorizationMiddleware");
 const orderDb = require("../db/orders");
 
-// Bypass auth for quick testing (can be toggled in Lambda env vars without redeployment)
-const BYPASS_AUTH = process.env.BYPASS_AUTH === "true";
-
-// Middleware to conditionally skip auth
-const authMiddleware = (req, res, next) => {
-  if (BYPASS_AUTH) {
-    console.warn("[AUTH BYPASS ENABLED] Skipping authentication checks");
-    req.user = { sub: "test-user", isAdmin: true, adminId: 1, role: "SUPER_ADMIN" };
-    return next();
-  }
-  adminAuthMiddleware(req, res, next);
-};
-
-const requireAdminMiddleware = (req, res, next) => {
-  if (BYPASS_AUTH) {
-    return next();
-  }
-  requireAdmin(req, res, next);
-};
-
 // Apply auth middleware to all routes
-router.use(authMiddleware);
-router.use(requireAdminMiddleware);
+router.use(adminAuthMiddleware);
+router.use(requireAdmin);
 
 // Create reusable middleware for admin orders
 const requireOrderOwnershipOrAdmin = createRoleAwareOwnershipMiddleware(async (req) =>

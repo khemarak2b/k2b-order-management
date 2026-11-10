@@ -5,21 +5,8 @@ const { authMiddleware } = require("/opt/nodejs/middleware/authMiddleware");
 const { createOwnershipMiddleware, requireUserIdMatch } = require("/opt/nodejs/middleware/authorizationMiddleware");
 const invoiceDb = require("../db/invoices");
 
-// Bypass auth for quick testing (can be toggled in Lambda env vars without redeployment)
-const BYPASS_AUTH = process.env.BYPASS_AUTH === "true";
-
-// Middleware to conditionally skip auth
-const conditionalAuthMiddleware = (req, res, next) => {
-  if (BYPASS_AUTH) {
-    console.warn("[AUTH BYPASS ENABLED] Skipping authentication checks");
-    req.user = { sub: "test-user", userId: "test-user-id" };
-    return next();
-  }
-  authMiddleware(req, res, next);
-};
-
 // Apply auth middleware to all routes
-router.use(conditionalAuthMiddleware);
+router.use(authMiddleware);
 router.use((req, res, next) => {
   req.isCustomerInvoiceRequest = true;
   next();

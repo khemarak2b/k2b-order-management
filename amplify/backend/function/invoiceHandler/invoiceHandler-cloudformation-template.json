@@ -103,8 +103,7 @@
             },
             "AUDIT_INGESTION_TOKEN_PARAMETER_NAME": {
               "Fn::Sub": "AuditIngestionToken-${env}"
-            },
-            "BYPASS_AUTH": "false"
+            }
           }
         },
         "Role": {

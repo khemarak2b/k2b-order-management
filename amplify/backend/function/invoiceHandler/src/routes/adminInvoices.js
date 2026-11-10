@@ -4,20 +4,8 @@ const invoiceController = require("../controllers/invoiceController");
 const { authMiddleware } = require("/opt/nodejs/middleware/authMiddleware");
 const { requireAdmin } = require("/opt/nodejs/middleware/roleAuthorizationMiddleware");
 
-// Bypass auth for quick testing
-const BYPASS_AUTH = process.env.BYPASS_AUTH === "true";
-
-const conditionalAuthMiddleware = (req, res, next) => {
-  if (BYPASS_AUTH) {
-    console.warn("[AUTH BYPASS ENABLED] Skipping authentication checks");
-    req.user = { sub: "550e8400-e29b-41d4-a716-446655440000", userId: "test-admin-id", id: "test-admin-id", isAdmin: true };
-    return next();
-  }
-  authMiddleware(req, res, next);
-};
-
 // Apply auth and admin role check to all routes
-router.use(conditionalAuthMiddleware);
+router.use(authMiddleware);
 router.use(requireAdmin);
 
 // Admin invoice routes
