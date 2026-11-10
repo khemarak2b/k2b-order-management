@@ -1,4 +1,5 @@
 const { k2bnotificationmanagement } = require("../k2b-notification-management-aws-exports");
+const { signedFetch } = require("/opt/nodejs/utils/signedFetch");
 
 /**
  * Get notification API URL from configuration
@@ -55,7 +56,8 @@ async function sendNotification(payload) {
   );
 
   try {
-    const response = await fetch(`${notificationApiUrl}/email`, {
+    // POST /email uses AWS_IAM auth, so the request is signed with this Lambda's role.
+    const response = await signedFetch(`${notificationApiUrl}/email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(message),

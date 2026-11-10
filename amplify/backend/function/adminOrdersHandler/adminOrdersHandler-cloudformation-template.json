@@ -209,6 +209,13 @@
                   "Fn::Sub": "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/ShopifyInventoryAdjustToken-${env}"
                 }
               ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": ["execute-api:Invoke"],
+              "Resource": {
+                "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:*/${env}/POST/email"
+              }
             }
           ]
         }

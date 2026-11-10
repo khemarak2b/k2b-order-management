@@ -6,13 +6,15 @@
     "test": "node test/orderUpdateNotification.test.js"
   },
   "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
     "@aws-sdk/client-secrets-manager": "^3.0.0",
     "@aws-sdk/client-ssm": "^3.0.0",
+    "@smithy/signature-v4": "^5.6.6",
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "lodash": "^4.17.21",
+    "nanoid": "^3.0.0",
     "pg": "^8.11.0",
-    "serverless-http": "^4.0.0",
-    "nanoid": "^3.0.0"
+    "serverless-http": "^4.0.0"
   }
 }
