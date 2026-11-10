@@ -106,20 +106,9 @@ exports.deleteOrder = async (req, res) => {
 
 exports.createOrder = async (req, res) => {
   try {
-    const {
-      userId,
-      subtotal,
-      taxAmount = 0,
-      shippingCost = 0,
-      discountAmount = 0,
-      totalAmount,
-      currencyCode = "AUD",
-      notes,
-      shippingAddress,
-      billingAddress,
-      orderItems,
-      items,
-    } = req.body;
+    // Any subtotal, tax, shipping, discount or total sent by the client is
+    // ignored: createOrder prices every item from the database.
+    const { userId, notes, shippingAddress, billingAddress, orderItems, items } = req.body;
 
     // Support both 'orderItems' and 'items' field names
     const finalOrderItems = orderItems || items;
@@ -128,14 +117,11 @@ exports.createOrder = async (req, res) => {
     if (!userId) {
       return res.status(400).json({ error: "userId is required" });
     }
-    if (totalAmount === undefined || totalAmount === null) {
-      return res.status(400).json({ error: "totalAmount is required" });
-    }
-    if (isNaN(totalAmount) || parseFloat(totalAmount) < 0) {
-      return res.status(400).json({ error: "totalAmount must be a non-negative number" });
-    }
     if (!shippingAddress) {
       return res.status(400).json({ error: "shippingAddress is required" });
+    }
+    if (!Array.isArray(finalOrderItems) || finalOrderItems.length === 0) {
+      return res.status(400).json({ error: "An order needs at least one item" });
     }
 
     await validateStockAvailability(req.pool, finalOrderItems);
@@ -144,16 +130,11 @@ exports.createOrder = async (req, res) => {
       user_id: userId,
       order_number: generateFormattedOrderId(),
       status: "pending",
-      subtotal: subtotal || totalAmount,
-      tax_amount: taxAmount,
-      shipping_cost: shippingCost,
-      discount_amount: discountAmount,
-      total_amount: totalAmount,
-      currency_code: currencyCode,
+      currency_code: "AUD",
       notes: notes || null,
       shipping_address: shippingAddress,
       billing_address: billingAddress || shippingAddress,
-      order_items: Array.isArray(finalOrderItems) ? finalOrderItems.map((item) => toSnakeCase(item)) : [],
+      order_items: finalOrderItems.map((item) => toSnakeCase(item)),
     };
 
     const result = await orderDb.createOrder(req.pool, order);
