@@ -85,6 +85,7 @@ exports.handler = async (event, context) => {
 };
 
 function injectAuditRequestContext(event, context) {
+  stripClientAuditHeaders(event);
   const claims = event?.requestContext?.authorizer?.claims || {};
   const tenantId =
     claims.tenantId ||
@@ -126,11 +127,24 @@ function setEventHeader(event, name, value) {
   event.headers[name] = value;
 }
 
+// Audit headers are only ever set here, from trusted context, so drop every
+// client-sent one first, including any this handler doesn't set.
+function stripClientAuditHeaders(event) {
+  for (const headers of [event?.headers, event?.multiValueHeaders]) {
+    if (!headers) continue;
+    for (const key of Object.keys(headers)) {
+      if (key.toLowerCase().startsWith("x-k2b-audit-")) delete headers[key];
+    }
+  }
+}
+
+// serverless-http merges multiValueHeaders into the request, so a header must
+// be removed from both maps or a client-sent copy survives.
 function deleteEventHeader(event, name) {
-  if (!event?.headers) return;
-  for (const key of Object.keys(event.headers)) {
-    if (key.toLowerCase() === name.toLowerCase()) {
-      delete event.headers[key];
+  for (const headers of [event?.headers, event?.multiValueHeaders]) {
+    if (!headers) continue;
+    for (const key of Object.keys(headers)) {
+      if (key.toLowerCase() === name.toLowerCase()) delete headers[key];
     }
   }
 }
