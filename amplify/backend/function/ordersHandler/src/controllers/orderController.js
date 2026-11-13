@@ -4,6 +4,7 @@ const { toSnakeCase } = require("/opt/nodejs/utils/caseConverter");
 const { generateFormattedOrderId } = require("../utils/idGenerator");
 const { sendNotification } = require("../utils/notificationService");
 const { validateStockAvailability } = require("../utils/stockValidationService");
+const { validateCustomerPayment } = require("../utils/customerPayment");
 const { notifyCustomerOfOrderUpdate } = require("/opt/nodejs/utils/orderUpdateNotification");
 const {
   auditCustomerOrderEvent,
@@ -246,19 +247,9 @@ exports.updateOrder = async (req, res) => {
 exports.createPayment = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { paymentMethod, amount, paymentDetails } = req.body;
 
     if (!orderId) {
       return res.status(400).json({ error: "Order ID is required" });
-    }
-    if (!paymentMethod) {
-      return res.status(400).json({ error: "Payment method is required" });
-    }
-
-    const parsedAmount = parseFloat(amount);
-    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
-      console.error("[createPayment] Invalid amount:", { amount, parsedAmount, type: typeof amount });
-      return res.status(400).json({ error: "Amount must be a positive number" });
     }
 
     // Verify order exists
@@ -267,12 +258,21 @@ exports.createPayment = async (req, res) => {
       return res.status(404).json({ error: "Order not found" });
     }
 
+    let validated;
+    try {
+      validated = validateCustomerPayment(order, req.body);
+    } catch (error) {
+      if (!error.status) throw error;
+      console.warn("[createPayment] Rejected:", { orderId, reason: error.message });
+      return res.status(error.status).json({ error: error.message });
+    }
+
     const payment = await orderDb.createPayment(req.pool, {
       order_id: orderId,
-      payment_method: paymentMethod,
-      amount: parsedAmount,
+      payment_method: validated.paymentMethod,
+      amount: validated.amount,
       status: "pending",
-      payment_details: paymentDetails || null,
+      payment_details: validated.paymentDetails,
     });
     await auditCustomerOrderEvent(req, {
       eventType: "CUSTOMER_ORDER_PAYMENT_CREATED",
