@@ -1,3 +1,5 @@
+const { assertSafeColumns } = require("/opt/nodejs/utils/sqlColumns");
+
 const createOrder = async (pool, data) => {
   const client = await pool.connect();
   const schema = process.env.ENVIRONMENT || "dev";
@@ -87,7 +89,8 @@ const createOrder = async (pool, data) => {
       total_amount: totalAmount,
     };
 
-    const orderColumns = Object.keys(orderData);
+    // orderSeed comes from the request body, so refuse anything that is not a plain column name.
+    const orderColumns = assertSafeColumns(Object.keys(orderData));
     const orderValues = Object.values(orderData);
     const orderPlaceholders = orderColumns.map((_, index) => `$${index + 1}`).join(", ");
 

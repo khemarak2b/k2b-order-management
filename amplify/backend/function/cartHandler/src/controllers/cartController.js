@@ -24,7 +24,7 @@ exports.getCart = async (req, res) => {
     res.json(formatResponse(cart));
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(error.status || 500).json({ error: error.status ? error.message : "Internal server error" });
   }
 };
 
@@ -53,17 +53,21 @@ exports.deleteCart = async (req, res) => {
     res.status(204).send();
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(error.status || 500).json({ error: error.status ? error.message : "Internal server error" });
   }
 };
 
 exports.createCart = async (req, res) => {
   try {
-    const { cart, cartItems } = req.body;
-    const { userId } = cart || {};
+    // The route checks body.userId against the signed-in user, so only that ID
+    // may be used. A different cart.userId would target someone else's cart.
+    const { userId, cart, cartItems } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: "Invalid userId: must be a not null value" });
+    }
+    if (cart?.userId !== undefined && String(cart.userId) !== String(userId)) {
+      return res.status(403).json({ error: "Forbidden" });
     }
 
     const dbData = {
@@ -97,7 +101,7 @@ exports.createCart = async (req, res) => {
     res.status(201).json(formatResponse(responseResult));
   } catch (error) {
     console.error("[createCart] Error:", error.message, error.stack);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(error.status || 500).json({ error: error.status ? error.message : "Internal server error" });
   }
 };
 
@@ -139,7 +143,7 @@ exports.addCartItem = async (req, res) => {
     res.status(201).json(formatResponse(item));
   } catch (error) {
     console.error("[addCartItem] Error:", error.message, error.stack);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(error.status || 500).json({ error: error.status ? error.message : "Internal server error" });
   }
 };
 
@@ -180,7 +184,7 @@ exports.updateCartItem = async (req, res) => {
     if (error.message === "Cart item not found") {
       return res.status(404).json({ error: "Cart item not found" });
     }
-    res.status(500).json({ error: "Internal server error" });
+    res.status(error.status || 500).json({ error: error.status ? error.message : "Internal server error" });
   }
 };
 
@@ -216,6 +220,6 @@ exports.deleteCartItem = async (req, res) => {
     res.status(204).send();
   } catch (error) {
     console.error("[deleteCartItem] Error:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(error.status || 500).json({ error: error.status ? error.message : "Internal server error" });
   }
 };

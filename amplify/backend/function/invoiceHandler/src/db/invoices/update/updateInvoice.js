@@ -1,3 +1,5 @@
+const { assertSafeColumns } = require("/opt/nodejs/utils/sqlColumns");
+
 const updateInvoice = async (pool, data) => {
   const client = await pool.connect();
   const schema = process.env.ENVIRONMENT || "dev";
@@ -8,6 +10,9 @@ const updateInvoice = async (pool, data) => {
     if (!id) {
       throw new Error("Invoice ID is required");
     }
+
+    // Keys can come from the request body, so refuse anything that is not a plain column name.
+    assertSafeColumns(Object.keys(updateData));
 
     // Build dynamic UPDATE query
     const updateFields = [];

@@ -1,9 +1,15 @@
+const { pickColumns } = require("/opt/nodejs/utils/sqlColumns");
+
+// Only payment status changes go through here; the request body reaches this query.
+const PAYMENT_UPDATE_COLUMNS = ["status"];
+
 const updatePayment = async (pool, data) => {
   const client = await pool.connect();
   const schema = process.env.ENVIRONMENT || "dev";
 
   try {
-    const { id, ...fields } = data;
+    const { id } = data;
+    const fields = pickColumns(data, PAYMENT_UPDATE_COLUMNS);
     const columns = Object.keys(fields);
     const values = Object.values(fields);
 

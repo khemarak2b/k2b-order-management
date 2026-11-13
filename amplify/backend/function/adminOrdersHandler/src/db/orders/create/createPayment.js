@@ -1,9 +1,11 @@
+const { assertSafeColumns } = require("/opt/nodejs/utils/sqlColumns");
+
 const createPayment = async (pool, data) => {
   const client = await pool.connect();
   const schema = process.env.ENVIRONMENT || "dev";
 
   try {
-    const columns = Object.keys(data);
+    const columns = assertSafeColumns(Object.keys(data));
     const values = Object.values(data);
     const placeholders = columns.map((_, i) => `$${i + 1}`).join(", ");
 

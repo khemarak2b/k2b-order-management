@@ -6,8 +6,9 @@ const {
   getPayment,
   getPayments,
 } = require("./read");
-const { createOrder, createCart, addCartItem, createPayment } = require("./create");
-const { updateOrder, updateCart, updateCartItem, updatePayment } = require("./update");
+// Cart writes live in cartHandler.
+const { createOrder, createPayment } = require("./create");
+const { updateOrder, updatePayment } = require("./update");
 const { deleteOrder, deleteCart, deleteCartItem } = require("./delete");
 
 module.exports = {
@@ -21,11 +22,7 @@ module.exports = {
   deleteCart,
   deleteCartItem,
   createOrder,
-  createCart,
-  addCartItem,
   createPayment,
   updateOrder,
-  updateCart,
-  updateCartItem,
   updatePayment,
 };

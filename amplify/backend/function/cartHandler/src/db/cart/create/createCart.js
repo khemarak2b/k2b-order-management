@@ -1,3 +1,6 @@
+const { pickColumns } = require("/opt/nodejs/utils/sqlColumns");
+const { CART_ITEM_INSERT_COLUMNS } = require("../columns");
+
 const createCart = async (pool, data) => {
   const client = await pool.connect();
   const schema = process.env.ENVIRONMENT || "dev";
@@ -25,16 +28,9 @@ const createCart = async (pool, data) => {
       cart = cartResult.rows[0];
     } else {
       // Create new cart
-      const columnsCart = Object.keys(data.cart);
-      const valuesCart = Object.values(data.cart);
-      const placeholders = columnsCart.map((_, i) => `$${i + 1}`).join(", ");
-
-      const queryCart = `
-        INSERT INTO ${schema}.carts (${columnsCart.join(", ")})
-        VALUES (${placeholders})
-        RETURNING *
-      `;
-      const resultCarts = await client.query(queryCart, valuesCart);
+      const resultCarts = await client.query(`INSERT INTO ${schema}.carts (user_id) VALUES ($1) RETURNING *`, [
+        user_id,
+      ]);
       cart = resultCarts.rows[0];
       cartId = cart.id;
       cartCreated = true;
@@ -43,12 +39,10 @@ const createCart = async (pool, data) => {
     /* ---------- INSERT CART ITEMS ---------- */
     let items = [];
     if (data.cart_items && data.cart_items.length > 0) {
-      const columnsCartItems = Object.keys(data.cart_items[0]);
-
-      // Ensure cart_id is included in the items
-      if (!columnsCartItems.includes("cart_id")) {
-        columnsCartItems.unshift("cart_id");
-      }
+      // Item keys come from the request body, so keep only known columns.
+      // Columns follow the first item, as before, so omitted ones keep their defaults.
+      data.cart_items = data.cart_items.map((item) => pickColumns(item, CART_ITEM_INSERT_COLUMNS));
+      const columnsCartItems = ["cart_id", ...Object.keys(data.cart_items[0])];
 
       const valuesCartItems = [];
       const placeholdersItems = data.cart_items

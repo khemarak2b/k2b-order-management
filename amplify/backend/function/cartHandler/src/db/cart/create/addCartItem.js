@@ -1,3 +1,6 @@
+const { pickColumns } = require("/opt/nodejs/utils/sqlColumns");
+const { CART_ITEM_INSERT_COLUMNS } = require("../columns");
+
 const addCartItem = async (pool, userId, itemData) => {
   const client = await pool.connect();
   const schema = process.env.ENVIRONMENT || "dev";
@@ -22,9 +25,12 @@ const addCartItem = async (pool, userId, itemData) => {
       await client.query(`UPDATE ${schema}.carts SET updated_at = NOW() WHERE id = $1`, [cartId]);
     }
 
-    // Add item to cart
-    const { cart_id, id, ...fields } = itemData; // Strip cart_id and id (shouldn't be present on add)
+    // Add item to cart. Only known columns: the keys come from the request body.
+    const fields = pickColumns(itemData, CART_ITEM_INSERT_COLUMNS);
     const cols = Object.keys(fields);
+    if (cols.length === 0) {
+      throw Object.assign(new Error("No cart item fields to add"), { status: 400 });
+    }
     const vals = Object.values(fields);
 
     const result = await client.query(

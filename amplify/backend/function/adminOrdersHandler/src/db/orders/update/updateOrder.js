@@ -1,10 +1,13 @@
+const { assertSafeColumns } = require("/opt/nodejs/utils/sqlColumns");
+
 const updateOrder = async (pool, data) => {
   const client = await pool.connect();
   const schema = process.env.ENVIRONMENT || "dev";
 
   try {
     const { id, ...fields } = data;
-    const columns = Object.keys(fields);
+    // Keys come from the request body, so refuse anything that is not a plain column name.
+    const columns = assertSafeColumns(Object.keys(fields));
     const values = Object.values(fields);
 
     if (columns.length === 0) {
