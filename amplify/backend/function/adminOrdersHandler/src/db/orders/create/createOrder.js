@@ -34,10 +34,14 @@ const createOrder = async (pool, data) => {
           pv.id,
           pv.product_id,
           pv.title,
-          pv.price AS base_price,
+          -- D-24: the catalogue price is variant wholesale, then product wholesale,
+          -- then the Shopify price (zero counts as unset), the same rule the
+          -- Customer App charges. A pricing-profile override still wins.
+          COALESCE(NULLIF(pv.wholesale_price, 0), NULLIF(p.wholesale_price, 0), pv.price) AS base_price,
           pv.currency_code,
           pvp.override_price
         FROM ${schema}.product_variants pv
+        JOIN ${schema}.products p ON p.id = pv.product_id
         LEFT JOIN ${schema}.pricing_profile_variant_prices pvp
           ON pvp.variant_id = pv.id
          AND pvp.profile_id = $2
