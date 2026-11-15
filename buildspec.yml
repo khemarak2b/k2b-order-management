@@ -8,6 +8,8 @@ phases:
       - amplify --version
   build:
     commands:
+      # T0.1: unit tests must pass before build.sh touches anything; a failure stops the pipeline.
+      - bash ./scripts/ci-test.sh
       - ls -al
       - aws --version
       - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
