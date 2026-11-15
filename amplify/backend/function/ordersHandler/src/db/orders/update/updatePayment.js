@@ -5,7 +5,7 @@ const PAYMENT_UPDATE_COLUMNS = ["status"];
 
 const updatePayment = async (pool, data) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     const { id } = data;

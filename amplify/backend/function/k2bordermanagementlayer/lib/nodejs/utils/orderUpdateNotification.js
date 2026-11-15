@@ -72,7 +72,7 @@ async function notifyCustomerOfOrderUpdate({
   }
 
   try {
-    const schema = process.env.ENVIRONMENT || "dev";
+    const schema = process.env.ENVIRONMENT;
     const result = await pool.query(
       `SELECT email, first_name, last_name FROM ${schema}.users WHERE id = $1`,
       [updatedOrder.user_id],

@@ -267,7 +267,7 @@ const insertAdminChangeLog = async (
 
 const updateOrderItemQuantity = async (pool, { orderId, itemId, quantity, reasonCode, reasonLabel, adminNote, updatedBy }) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     await client.query("BEGIN");

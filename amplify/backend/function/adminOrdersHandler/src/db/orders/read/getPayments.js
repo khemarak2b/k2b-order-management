@@ -1,6 +1,6 @@
 const getPayments = async (pool, orderId) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     const query = `

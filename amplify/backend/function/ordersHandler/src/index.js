@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const serverless = require("serverless-http");
 const { getDbPool } = require("/opt/nodejs/database/db");
+// Stop at cold start if ENVIRONMENT (the DB schema) is missing, rather than default to dev.
+require("/opt/nodejs/utils/environment").requireEnvironment();
 const orderRoutes = require("./routes/orders");
 const { extractAndInjectCognitoAuth } = require("/opt/nodejs/utils/cognitoExtractor");
 

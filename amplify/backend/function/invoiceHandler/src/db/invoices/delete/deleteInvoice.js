@@ -1,6 +1,6 @@
 const deleteInvoice = async (pool, id) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     // Soft delete - just mark as deleted

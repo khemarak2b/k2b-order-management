@@ -1,6 +1,6 @@
 const updateInvoiceLineItems = async (pool, invoiceId, lineItems) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     await client.query("BEGIN");

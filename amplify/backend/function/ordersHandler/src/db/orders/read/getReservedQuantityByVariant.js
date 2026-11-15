@@ -6,7 +6,7 @@
  */
 async function getReservedQuantityByVariant(pool, variantIds) {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     if (!Array.isArray(variantIds) || variantIds.length === 0) {

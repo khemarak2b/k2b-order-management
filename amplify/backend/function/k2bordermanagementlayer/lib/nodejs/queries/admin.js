@@ -7,7 +7,7 @@
 async function getAdminUserByCognitoSub(pool, cognitoSub) {
   const client = await pool.connect();
   try {
-    const schema = process.env.ENVIRONMENT || "dev";
+    const schema = process.env.ENVIRONMENT;
     
     const result = await client.query(
       `SELECT id, role, first_name, last_name, email

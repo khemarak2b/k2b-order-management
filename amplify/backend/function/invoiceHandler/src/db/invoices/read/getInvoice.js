@@ -3,7 +3,7 @@ const getInvoiceChangeLog = require("./getInvoiceChangeLog");
 
 const getInvoice = async (pool, id) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     // Get invoice

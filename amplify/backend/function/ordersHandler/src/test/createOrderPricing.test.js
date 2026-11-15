@@ -1,5 +1,8 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
+
+// Deployed Lambdas always set this (F0.6); the queries use it as the schema.
+process.env.ENVIRONMENT = "dev";
 const createOrder = require("../db/orders/create/createOrder");
 
 const VARIANTS = {

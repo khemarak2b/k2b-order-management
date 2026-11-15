@@ -7,7 +7,7 @@
 async function getUserIdByCognitoSub(pool, cognitoSub) {
   const client = await pool.connect();
   try {
-    const schema = process.env.ENVIRONMENT || "dev";
+    const schema = process.env.ENVIRONMENT;
     
     const result = await client.query(
       `SELECT id FROM ${schema}.users WHERE cognito_sub = $1`,

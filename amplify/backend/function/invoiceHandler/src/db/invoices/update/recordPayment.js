@@ -1,6 +1,6 @@
 const recordPayment = async (pool, invoiceId, paymentData) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     const { amount, payment_method, payment_reference, payment_date, notes, recorded_by } = paymentData;

@@ -1,6 +1,6 @@
 const getAllOrders = async (pool, filters = {}, limit = 20, offset = 0) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     // Build WHERE clause with multiple filters

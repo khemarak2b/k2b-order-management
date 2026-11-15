@@ -3,7 +3,7 @@ const { CART_ITEM_INSERT_COLUMNS } = require("../columns");
 
 const addCartItem = async (pool, userId, itemData) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     await client.query("BEGIN");

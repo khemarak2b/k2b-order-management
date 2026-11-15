@@ -151,7 +151,7 @@ function buildActor(req) {
 
 async function findOrderTenant(req, orderId) {
   if (!orderId || !req?.pool?.query) return "";
-  const configuredSchema = process.env.ENVIRONMENT || "dev";
+  const configuredSchema = process.env.ENVIRONMENT;
   const schema = /^[A-Za-z_][A-Za-z0-9_]*$/.test(configuredSchema)
     ? configuredSchema
     : "dev";

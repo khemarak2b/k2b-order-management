@@ -293,7 +293,7 @@ exports.generateInvoiceFromOrder = async (req, res) => {
     }, 0);
 
     const additionalTotal = normalizedManualLineItems.reduce((sum, item) => sum + (parseFloat(item.line_total) || 0), 0);
-    const quantityAdjustments = await getInvoiceChangeLog(req.pool, orderId, process.env.ENVIRONMENT || "dev");
+    const quantityAdjustments = await getInvoiceChangeLog(req.pool, orderId, process.env.ENVIRONMENT);
 
     // Create or reuse invoice
     let createdInvoice;
@@ -439,7 +439,7 @@ exports.generateInvoiceFromOrder = async (req, res) => {
  */
 const fetchOrderWithItems = async (pool, orderId) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     // Get order

@@ -2,7 +2,7 @@ const { assertSafeColumns } = require("/opt/nodejs/utils/sqlColumns");
 
 const updateOrder = async (pool, data) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
     const { id, ...fields } = data;

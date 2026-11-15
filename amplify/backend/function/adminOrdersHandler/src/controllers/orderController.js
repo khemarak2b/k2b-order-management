@@ -208,7 +208,7 @@ exports.createOrder = async (req, res) => {
       const profileAccessResult = await req.pool.query(
         `
           SELECT 1
-          FROM ${process.env.ENVIRONMENT || "dev"}.admin_pricing_profiles
+          FROM ${process.env.ENVIRONMENT}.admin_pricing_profiles
           WHERE admin_user_id = $1 AND profile_id = $2
           LIMIT 1
         `,
@@ -500,7 +500,7 @@ exports.fulfillOrder = async (req, res) => {
 exports.updateOrderItemQuantity = async (req, res) => {
   try {
     const { orderId, itemId } = req.params;
-    const schema = process.env.ENVIRONMENT || "dev";
+    const schema = process.env.ENVIRONMENT;
     const quantity = Number(req.body?.quantity);
     const reasonCode = req.body?.reasonCode || req.body?.reason_code;
     const adminNote = typeof req.body?.adminNote === "string" ? req.body.adminNote.trim() : req.body?.admin_note;
@@ -708,7 +708,7 @@ async function sendOrderCreatedNotification(orderResults, pool) {
   const client = await pool.connect();
 
   try {
-    const schema = process.env.ENVIRONMENT || "dev";
+    const schema = process.env.ENVIRONMENT;
     const result = await client.query(`SELECT email FROM ${schema}.users WHERE id = $1`, [order.user_id]);
 
     if (result.rows.length === 0) {

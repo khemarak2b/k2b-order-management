@@ -1,6 +1,6 @@
 const getInvoicePayments = async (pool, invoiceId, options = {}) => {
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
   const { limit = 50, offset = 0 } = options;
 
   try {

@@ -12,7 +12,7 @@ const updateCartItem = async (pool, itemId, updateData) => {
   }
 
   const client = await pool.connect();
-  const schema = process.env.ENVIRONMENT || "dev";
+  const schema = process.env.ENVIRONMENT;
 
   try {
 

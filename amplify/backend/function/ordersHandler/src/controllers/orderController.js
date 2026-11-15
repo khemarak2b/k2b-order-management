@@ -405,7 +405,7 @@ async function sendOrderCreatedNotification(orderResults, pool) {
   // Fetch user email from users table
   const client = await pool.connect();
   try {
-    const schema = process.env.ENVIRONMENT || "dev";
+    const schema = process.env.ENVIRONMENT;
     const result = await client.query(`SELECT email FROM ${schema}.users WHERE id = $1`, [order.user_id]);
 
     if (result.rows.length === 0) {
