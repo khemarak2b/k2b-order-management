@@ -1,0 +1,11 @@
+{
+  "name": "k2b-order-management-tests",
+  "private": true,
+  "description": "Repo-root test tooling only (T0.2 integration tests). Lambda code and layers have their own package.json files.",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 \"test/integration/*.test.mjs\""
+  },
+  "devDependencies": {
+    "@k2b/db-migrations": "file:vendor/k2b-db-migrations-0.1.0.tgz"
+  }
+}
